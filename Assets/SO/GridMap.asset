@@ -12,5 +12,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5f93dbbddb6f4a37b148a6fe06de56ad, type: 3}
   m_Name: GridMap
   m_EditorClassIdentifier: 
-  cellSize: {x: 1, y: 1}
-  gridMapSize: {x: 4, y: 5}
+  cellSize: {x: 0.5, y: 0.5}
+  gridMapSize: {x: 6, y: 3}
