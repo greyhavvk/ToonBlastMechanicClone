@@ -7,7 +7,7 @@ namespace GridSystem
     public class GridMapManager : MonoBehaviour
     {
         [SerializeField] private GridMapCreator gridMapCreator;
-        private Dictionary<Vector2, CellData> _cellDataDictionary;
+        private Dictionary<Vector2Int, CellData> _cellDataDictionary;
 
         public static GridMapManager Instance;
 
@@ -45,9 +45,30 @@ namespace GridSystem
 
         private CellData GetCellData(Vector2 worldPosition)
         {
-            Vector2 cellIndex = gridMapCreator.GetCellIndex(worldPosition);
+            Vector2Int cellIndex = gridMapCreator.GetCellIndex(worldPosition);
             var cellData = _cellDataDictionary[cellIndex];
             return cellData;
+        }
+
+        public bool CheckCellExist(Vector2Int cellIndex)
+        {
+            return _cellDataDictionary.ContainsKey(cellIndex);
+        }
+
+        public Vector2 GetCellPosition(Vector2Int cellIndex)
+        {
+            return _cellDataDictionary[cellIndex].Position;
+        }
+        
+        public void FillCell(Vector2Int cellIndex, GameObject holdingObject)
+        {
+            _cellDataDictionary[cellIndex].FillCell(holdingObject);
+        }
+        
+        public void EmptyCell(Vector2 worldPosition)
+        {
+            Vector2Int cellIndex = gridMapCreator.GetCellIndex(worldPosition);
+            _cellDataDictionary[cellIndex].EmptyCell();
         }
     }
 }

@@ -6,6 +6,6 @@ namespace GridSystem
     public class GridMapSO : ScriptableObject
     {
         public Vector2 cellSize;
-        public Vector2 gridMapSize;
+        public Vector2Int gridMapSize;
     }
 }
