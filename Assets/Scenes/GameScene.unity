@@ -170,7 +170,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   gridFrame: {fileID: 427678465}
-  gridMapSo: {fileID: 11400000, guid: 6821bfbdd83b4b3459f59f1ee63448dc, type: 2}
 --- !u!1 &427678464
 GameObject:
   m_ObjectHideFlags: 0
