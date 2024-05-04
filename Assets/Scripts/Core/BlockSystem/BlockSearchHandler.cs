@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using BlockSystem.Block;
 using Core.BlockSystem.Block;
 using UnityEngine;
 
@@ -12,7 +11,8 @@ namespace Core.BlockSystem
         
         public static BlockSearchHandler Instance;
         private List<Vector2Int> _neighborCoordinates;
-        private List<Vector2Int> _foundedObstacleCoordinates;
+        private List<(Vector2Int,int)> _foundedObstacleCoordinatesAndInteractCounts;
+        public IBlock[][] BlockMap => _blockMap;
         private void Awake()
         {
             SetInstance();
@@ -36,9 +36,18 @@ namespace Core.BlockSystem
             return _blockMap[index.x][index.y];
         }
         
-        private void RemoveBlockFromMap(Vector2Int index)
+        public void RemoveBlockFromMap(IBlock block)
         {
-            _blockMap[index.x][index.y] = null;
+            for (int i = 0; i < _blockMap.GetLength(0); i++)
+            {
+                for (int j = 0; j < _blockMap.GetLength(1); j++)
+                {
+                    if (block==_blockMap[i][j])
+                    {
+                        _blockMap[i][j] = null;
+                    } 
+                }
+            }
         }
 
         public void UpdateBlockMapColumnForNewBlock(IBlock[] fillingBlocks, int columnIndex)
@@ -49,16 +58,22 @@ namespace Core.BlockSystem
             }
         }
 
-        public List<ObstacleBlock> GetObstacleThatInteracted()
+        public List<(ObstacleBlock, int)> GetObstacleThatInteractedAndInteractedCount()
         {
-            return _foundedObstacleCoordinates.Select(foundedObstacleCoordinate =>
-                _blockMap[foundedObstacleCoordinate.x][foundedObstacleCoordinate.y] as ObstacleBlock).ToList();
+            return _foundedObstacleCoordinatesAndInteractCounts.Select(foundedObstacleCoordinate =>
+                (_blockMap[foundedObstacleCoordinate.Item1.x][foundedObstacleCoordinate.Item1.y] as ObstacleBlock,
+                    foundedObstacleCoordinate.Item2)).ToList();
         }
         
         public List<IBlock> GetNeighbor()
         {
-            return _neighborCoordinates.Select(neighborCoordinate =>
+            var neighbor=_neighborCoordinates.Select(neighborCoordinate =>
                 _blockMap[neighborCoordinate.x][neighborCoordinate.y]).ToList();
+            foreach (var neighborCoordinate in _neighborCoordinates)
+            {
+                _blockMap[neighborCoordinate.x][neighborCoordinate.y] = null;
+            }
+            return neighbor;
         }
         
 
@@ -81,15 +96,14 @@ namespace Core.BlockSystem
                 }
                 case PowerUpBlock:
                     return block;
-                    break;
             }
             return null;
         }
 
         private void SearchNeighborCoordinates(BlockType blockType, Vector2Int searchIndex)
         {
-            _neighborCoordinates = new List<Vector2Int>();
-            _foundedObstacleCoordinates = new List<Vector2Int>();
+            _neighborCoordinates = new List<Vector2Int>{searchIndex};
+            _foundedObstacleCoordinatesAndInteractCounts = new List<(Vector2Int, int)>();
             
             RecursiveSearchNeighbours(blockType, searchIndex);
         }
@@ -114,16 +128,30 @@ namespace Core.BlockSystem
 
                     index = new Vector2Int(x, y);
                     curBlock = _blockMap[index.x][index.y];
-
+                    if (curBlock==null)
+                    {
+                        continue;
+                    }
                     if (curBlock.GetBlockType() == blockType && !_neighborCoordinates.Contains(index))
                     {
                         _neighborCoordinates.Add(index);
                         RecursiveSearchNeighbours(blockType, index);
                     }
-                    else if (curBlock is ObstacleBlock && !_foundedObstacleCoordinates.Contains(index))
-                    {
-                        _foundedObstacleCoordinates.Add(index);
-                    }
+                    else if (curBlock is ObstacleBlock)
+                        if (_foundedObstacleCoordinatesAndInteractCounts.Any(foundedObstacle=>foundedObstacle.Item1==index))
+                        {
+                            var foundedObstacleCoordinateAndInteractCountIndex =
+                                _foundedObstacleCoordinatesAndInteractCounts.FindIndex(foundedObstacle =>
+                                    foundedObstacle.Item1 == index);
+                            _foundedObstacleCoordinatesAndInteractCounts
+                                [foundedObstacleCoordinateAndInteractCountIndex] = (index,
+                                _foundedObstacleCoordinatesAndInteractCounts[
+                                    foundedObstacleCoordinateAndInteractCountIndex].Item2 + 1);
+                        }
+                        else
+                        {
+                            _foundedObstacleCoordinatesAndInteractCounts.Add((index,1));
+                        }
                 }
             }
         }

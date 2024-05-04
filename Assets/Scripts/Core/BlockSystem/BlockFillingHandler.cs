@@ -1,6 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
 using BlockSystem;
-using BlockSystem.Block;
 using Core.BlockSystem.Block;
 using SerializableSetting;
 using UnityEngine;
@@ -64,23 +64,82 @@ namespace Core.BlockSystem
             return GetBlock(blockType);
         }
 
-        public IBlock[] SpawnBlocksForEmptyCellsInColumn(int requestedCount)
-        {
-            IBlock[] blocks = new IBlock[requestedCount];
-            for (int i = 0; i < requestedCount; i++)
-            {
-                blocks[i] = GetBlock(GetRandomBulletType());
-            }
-
-            return blocks;
-        }
-
         private BlockType GetRandomBulletType()
         {
             var randomColor = Random.Range(0, sizeof(ColorType) - 1);
             var randomBlockType =
                 (BlockType)Enum.Parse(typeof(BlockType), ((ColorType)randomColor).ToString() + "Block");
             return randomBlockType;
+        }
+        
+        public (List<(int,IBlock[])>, IBlock[][]) UpdateBlockMap(IBlock[][] blockMap)
+        {
+            var columnIndexAndFillingBlocks = new List<(int, IBlock[])>();
+            for (int j = 0; j < blockMap.GetLength(1); j++)
+            {
+                int neededBlock = 0;
+                List<IBlock> spawnedBlocks = new List<IBlock>();
+                for (int i = blockMap.GetLength(0)-1; i >= 0; i--)
+                {
+                    var block = blockMap[i][j];
+                    if (block!=null)
+                    {
+                        if (block.GetBlockType()==BlockType.ObstacleBlock)
+                        {
+                            neededBlock = 0;
+                        }
+                        else
+                        {
+                            var newRowIndex = FindDeeperEmptyBlockMapRowIndex(j, i, blockMap);
+                            if (newRowIndex<i)
+                            {
+                                blockMap[i][newRowIndex] = block;
+                                blockMap[i][j] = null;
+                                neededBlock++;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        neededBlock++;
+                    }
+                }
+
+                if (blockMap[0][j]!=null)
+                {
+                    neededBlock=0;
+                }
+
+                for (int i = 0; i < neededBlock; i++)
+                {
+                    var newBlock = blockFactories[GetRandomBulletType()].GetProduct() as IBlock;
+                    spawnedBlocks.Add(newBlock);
+                }
+                columnIndexAndFillingBlocks.Add((j, spawnedBlocks.ToArray()));
+            }
+
+            return (columnIndexAndFillingBlocks, blockMap);
+        }
+
+        private int FindDeeperEmptyBlockMapRowIndex(int currentColumnIndex, int startRowIndex, IBlock[][] blockMap)
+        {
+            int foundedIndex = startRowIndex;
+            int deeper = blockMap.GetLength(0);
+            for (int i = deeper; i >= startRowIndex; i--)
+            {
+                var block = blockMap[i][currentColumnIndex];
+                if (block==null)
+                {
+                    foundedIndex = Mathf.Max(i, foundedIndex);
+                }
+                else if (block.GetBlockType()==BlockType.ObstacleBlock)
+                {
+                    foundedIndex = startRowIndex;
+                }
+                
+            }
+
+            return currentColumnIndex;
         }
     }
 }

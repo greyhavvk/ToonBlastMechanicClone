@@ -1,4 +1,4 @@
-﻿namespace ParticleSystems
+﻿namespace Core.ParticleSystems
 {
     public enum ParticleType
     {

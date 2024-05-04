@@ -1,8 +1,8 @@
-﻿using ParticleSystems;
+﻿using Core.ParticleSystems;
+using ParticleSystems;
 using UnityEngine;
-using UnityEngine.Serialization;
 
-namespace BlockSystem.Block
+namespace Core.BlockSystem.Block
 {
     public class RocketBlock : PowerUpBlock
     {
@@ -23,7 +23,7 @@ namespace BlockSystem.Block
             spriteRenderer.sprite = rocketSprites[directionIndex];
         }
         
-        public override void BlastBlock()
+        protected override void PlayBlastParticle()
         {
             ParticleManager.Instance.PlayParticle(
                 _rocketDirectionIsHorizontal ? ParticleType.RocketBlockHorizontal : ParticleType.RocketBlockVertical,

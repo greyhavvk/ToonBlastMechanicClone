@@ -1,4 +1,5 @@
-﻿using DG.Tweening;
+﻿using Core.ParticleSystems;
+using DG.Tweening;
 using SerializableSetting;
 using UnityEngine;
 

@@ -36,12 +36,6 @@ namespace Managers
             return CheckCellExist(cellIndex);
         }
 
-        public GameObject GetHoldingObject(Vector2 worldPosition)
-        {
-            var cellData = GetCellData(worldPosition);
-            return cellData.HoldingObject;
-        }
-
         public bool IsCellEmpty(Vector2 worldPosition)
         {
             var cellData = GetCellData(worldPosition);
@@ -66,9 +60,9 @@ namespace Managers
             return _cellDatas[cellIndex.x][cellIndex.y].Position;
         }
         
-        public void FillCell(Vector2Int cellIndex, GameObject holdingObject)
+        public void FillCell(Vector2Int cellIndex)
         {
-            _cellDatas[cellIndex.x][cellIndex.y].FillCell(holdingObject);
+            _cellDatas[cellIndex.x][cellIndex.y].FillCell();
         }
         
         public void EmptyCell(Vector2 worldPosition)
@@ -80,6 +74,11 @@ namespace Managers
         public float GetCellScaleY()
         {
             return _cellSizeY;
+        }
+
+        public Vector2Int GetCellIndex(Vector2 worldPosition)
+        {
+            return gridMapCreator.GetCellIndex(worldPosition);
         }
     }
 }

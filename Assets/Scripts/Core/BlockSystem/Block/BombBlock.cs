@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace BlockSystem.Block
+namespace Core.BlockSystem.Block
 {
     public class BombBlock : MonoBehaviour
     {

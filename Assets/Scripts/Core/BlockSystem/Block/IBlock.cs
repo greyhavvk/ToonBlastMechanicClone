@@ -1,7 +1,6 @@
-﻿using Core.BlockSystem.Block;
-using UnityEngine;
+﻿using UnityEngine;
 
-namespace BlockSystem.Block
+namespace Core.BlockSystem.Block
 {
     public interface IBlock
     {

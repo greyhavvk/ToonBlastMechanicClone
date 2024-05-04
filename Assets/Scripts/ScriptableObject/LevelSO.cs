@@ -1,5 +1,4 @@
-﻿using BlockSystem.Block;
-using Core.BlockSystem.Block;
+﻿using Core.BlockSystem.Block;
 using SerializableSetting;
 using UnityEngine;
 

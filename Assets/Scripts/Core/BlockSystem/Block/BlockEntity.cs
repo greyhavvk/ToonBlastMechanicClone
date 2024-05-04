@@ -1,8 +1,8 @@
-﻿using Core.BlockSystem.Block;
-using Factory_and_ObjectPool;
+﻿using Factory_and_ObjectPool;
+using ParticleSystems;
 using UnityEngine;
 
-namespace BlockSystem.Block
+namespace Core.BlockSystem.Block
 {
     public class BlockEntity : PoolableObject, IBlock
     {
@@ -20,7 +20,13 @@ namespace BlockSystem.Block
 
         public virtual void BlastBlock()
         {
+            PlayBlastParticle();
             ReturnToPool();
+        }
+
+        protected virtual void PlayBlastParticle()
+        {
+            
         }
 
         public virtual void Placed()

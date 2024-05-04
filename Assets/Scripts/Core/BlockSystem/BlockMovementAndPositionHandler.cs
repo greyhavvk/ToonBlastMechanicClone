@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using BlockSystem.Block;
+using Core.BlockSystem.Block;
 using Cysharp.Threading.Tasks;
 using DG.Tweening;
 using Managers;
@@ -12,7 +12,9 @@ namespace Core.BlockSystem
     {
         public static BlockMovementAndPositionHandler Instance;
         public Action OnFallEnded;
+        public Action<List<IBlock>> OnBlastInCenterAnimationEnded;
         private const float FallSpeed = 5f;
+        private const float MoveCenterTime = .5f;
         private const float SpawnFallingAbovePositionY=3;
 
         private void Awake()
@@ -40,7 +42,7 @@ namespace Core.BlockSystem
                     if (GridMapManager.Instance.CheckCellExist(blockPositionOnGrid))
                     {
                         blocks[i][j].GetTransform().position = GridMapManager.Instance.GetCellPosition(blockPositionOnGrid);
-                        GridMapManager.Instance.FillCell(blockPositionOnGrid, blocks[i][j].GetTransform().gameObject);
+                        GridMapManager.Instance.FillCell(blockPositionOnGrid);
                     } 
                 }
             }
@@ -48,7 +50,6 @@ namespace Core.BlockSystem
 
         public async void RepositionBlocks(IBlock[][] blocks)
         {
-
             List<UniTask> taskList = new List<UniTask>();
             
             for (int i = 0; i < blocks.GetLength(0); i++)
@@ -64,7 +65,7 @@ namespace Core.BlockSystem
                         var time = Mathf.Abs(destinationY - blockPosition.y) / FallSpeed;
                         var tween = blocks[i][j].GetTransform().DOMoveY(destinationY, time).SetEase(Ease.OutBounce);
                         taskList.Add(tween.ToUniTask());
-                        GridMapManager.Instance.FillCell(blockPositionOnGrid,blocks[i][j].GetTransform().gameObject);
+                        GridMapManager.Instance.FillCell(blockPositionOnGrid);
                     }
                 }
             }
@@ -94,7 +95,25 @@ namespace Core.BlockSystem
                     refCellPosition.y += GridMapManager.Instance.GetCellScaleY();
                 }
             }
+        }
+        
+        public async void BlastInCenter(Vector3 centerPosition, List<IBlock> blocksThatWillBlast)
+        {
+            List<UniTask> taskList = new List<UniTask>();
 
+            foreach (var blockThatWillBlast in blocksThatWillBlast)
+            {
+                RemoveBlockOnGridMap(blockThatWillBlast.GetTransform().position);
+                var tween = blockThatWillBlast.GetTransform().DOMove(centerPosition, MoveCenterTime)
+                    .SetEase(Ease.Linear).OnComplete((() =>
+                    {
+                        blockThatWillBlast.BlastBlock();
+                    }));
+                taskList.Add(tween.ToUniTask());
+            }
+            
+            await UniTask.WhenAll(taskList);
+            OnBlastInCenterAnimationEnded?.Invoke(blocksThatWillBlast);
         }
     }
 }
