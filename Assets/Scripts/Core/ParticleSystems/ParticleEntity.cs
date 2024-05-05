@@ -1,9 +1,8 @@
 ﻿using Cysharp.Threading.Tasks;
-using DG.Tweening;
 using Factory_and_ObjectPool;
 using UnityEngine;
 
-namespace ParticleSystems
+namespace Core.ParticleSystems
 {
     public class ParticleEntity : PoolableObject
     {

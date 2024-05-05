@@ -10,12 +10,22 @@ namespace Core.BlockSystem
         private IBlock[][] _blockMap;
         
         public static BlockSearchHandler Instance;
-        private List<Vector2Int> _neighborCoordinates;
-        private List<(Vector2Int,int)> _foundedObstacleCoordinatesAndInteractCounts;
+        
+        private List<(Vector2Int,int)> _foundedBlockIndexesAndOrders;
+
+        public List<(Vector2Int, int)> FoundedBlockIndexesAndOrders => _foundedBlockIndexesAndOrders;
+
         public IBlock[][] BlockMap => _blockMap;
+
         private void Awake()
         {
             SetInstance();
+            ResetSearchLists();
+        }
+
+        public void ResetSearchLists()
+        {
+            _foundedBlockIndexesAndOrders = new List<(Vector2Int, int)>();
         }
 
         private void SetInstance()
@@ -31,9 +41,14 @@ namespace Core.BlockSystem
             _blockMap = blockMap;
         }
 
-        private IBlock GetBlock(Vector2Int index)
+        public IBlock GetBlock(Vector2Int index)
         {
             return _blockMap[index.x][index.y];
+        }
+
+        public void RemoveBlockFromMap(Vector2Int index)
+        {
+            _blockMap[index.x][index.y] = null;
         }
         
         public void RemoveBlockFromMap(IBlock block)
@@ -50,33 +65,6 @@ namespace Core.BlockSystem
             }
         }
 
-        public void UpdateBlockMapColumnForNewBlock(IBlock[] fillingBlocks, int columnIndex)
-        {
-            for (int i = 0; i < fillingBlocks.Length; i++)
-            {
-                _blockMap[i][columnIndex] = fillingBlocks[i];
-            }
-        }
-
-        public List<(ObstacleBlock, int)> GetObstacleThatInteractedAndInteractedCount()
-        {
-            return _foundedObstacleCoordinatesAndInteractCounts.Select(foundedObstacleCoordinate =>
-                (_blockMap[foundedObstacleCoordinate.Item1.x][foundedObstacleCoordinate.Item1.y] as ObstacleBlock,
-                    foundedObstacleCoordinate.Item2)).ToList();
-        }
-        
-        public List<IBlock> GetNeighbor()
-        {
-            var neighbor=_neighborCoordinates.Select(neighborCoordinate =>
-                _blockMap[neighborCoordinate.x][neighborCoordinate.y]).ToList();
-            foreach (var neighborCoordinate in _neighborCoordinates)
-            {
-                _blockMap[neighborCoordinate.x][neighborCoordinate.y] = null;
-            }
-            return neighbor;
-        }
-        
-
         public IBlock FindInteractableBlock(Vector2Int index)
         {
             var block = GetBlock(index);
@@ -85,30 +73,169 @@ namespace Core.BlockSystem
             {
                 case ColorBlock:
                 {
-                    var blockType = block.GetBlockType();
-                    SearchNeighborCoordinates(blockType, index);
-                    if (_neighborCoordinates.Count>0)
-                    {
-                        return block;
-                    }
+                    if (InteractColorBlock(index, block, out var interactableColorBlock)) return interactableColorBlock;
 
                     break;
                 }
                 case PowerUpBlock:
-                    return block;
+                    InteractPowerUpBlock(index, block);
+                   return block;
+                    break;
             }
             return null;
         }
-
-        private void SearchNeighborCoordinates(BlockType blockType, Vector2Int searchIndex)
+        
+        public void AddNewBlock(Vector2Int centerIndex, IBlock powerUp)
         {
-            _neighborCoordinates = new List<Vector2Int>{searchIndex};
-            _foundedObstacleCoordinatesAndInteractCounts = new List<(Vector2Int, int)>();
-            
-            RecursiveSearchNeighbours(blockType, searchIndex);
+            _blockMap[centerIndex.x][centerIndex.y] = powerUp;
+        }
+        
+        private void InteractPowerUpBlock(Vector2Int index, IBlock block)
+        {
+             int startOrder = 0;
+             _foundedBlockIndexesAndOrders.Add((index, startOrder));
+             SearchByPowerUp(index, block, startOrder);
         }
 
-        private void RecursiveSearchNeighbours(BlockType blockType, Vector2Int searchIndex)
+        private void SearchByPowerUp(Vector2Int index, IBlock block, int startOrder)
+        {
+            RecursiveSearchByPowerUp(index, block, startOrder);
+        }
+        
+        private void RecursiveSearchByPowerUp(Vector2Int index, IBlock block, int startOrder)
+        {
+            if (block is BombBlock)
+            {
+                SearchBombTargets(index, startOrder);
+            }
+            else if (block is RocketBlock rocketBlock)
+            {
+                var rocketDirectionIsHorizontal = rocketBlock.RocketDirectionIsHorizontal;
+                SearchRocketTargets(index, rocketDirectionIsHorizontal, startOrder);
+            }
+        }
+
+        private void SearchRocketTargets(Vector2Int index, bool rocketDirectionIsHorizontal, int startOrder)
+        {
+            int x, y;
+            int currentOrder = startOrder;
+            if (rocketDirectionIsHorizontal)
+            {
+                for (int i = 1; i < _blockMap.GetLength(1); i++)
+                {
+                    bool lookRight = (index.y + i >= 0 && index.y + i <= _blockMap.GetLength(1));
+                    bool lookLeft = (index.y - i >= 0 && index.y - i <= _blockMap.GetLength(1));
+                    if (lookRight || lookLeft)
+                    {
+                        if (lookLeft)
+                        {
+                            
+                            x = index.x;
+                            y = index.y - 1;
+                            FoundPowerUpTarget(x, y, currentOrder);
+                        }
+
+                        if (lookRight)
+                        {
+                            x = index.x;
+                            y = index.y + 1;
+                            FoundPowerUpTarget(x, y, currentOrder);
+                        }
+
+                        currentOrder++;
+                    }
+
+                    break;
+                }
+            }
+            else
+            {
+                for (int i = 1; i < _blockMap.GetLength(0); i++)
+                {
+                    bool lookUp = (index.x - i >= 0 && index.x - i <= _blockMap.GetLength(0));
+                    bool lookDown = (index.x + i >= 0 && index.x + i <= _blockMap.GetLength(0));
+                    if (lookUp || lookDown)
+                    {
+                        if (lookDown)
+                        {
+                            x = index.x - 1;
+                            y = index.y;
+                            FoundPowerUpTarget(x, y, currentOrder);
+                        }
+
+                        if (lookUp)
+                        {
+                            x = index.x + 1;
+                            y = index.y;
+                            FoundPowerUpTarget(x, y, currentOrder);
+                        }
+
+                        currentOrder++;
+                    }
+
+                    break;
+                }
+            }
+
+        }
+
+        private void FoundPowerUpTarget(int x, int y, int currentOrder)
+        {
+            var currentIndex = new Vector2Int(x, y);
+            _foundedBlockIndexesAndOrders.Add((currentIndex, currentOrder));
+            RecursiveSearchBlockInSameTypeNeighbor(BlockType.ObstacleBlock,currentIndex);
+            var block = _blockMap[currentIndex.x][currentIndex.y];
+            if (block is PowerUpBlock)
+            {
+                RecursiveSearchByPowerUp(currentIndex, block, currentOrder+1);
+            }
+        }
+
+        private void SearchBombTargets(Vector2Int index, int startOrder)
+        {
+            bool inRowBorders;
+            bool inColumnBorders;
+            for (int i = -1; i <= 1; i++)
+            {
+                for (int j = -1; j <= 1; j++)
+                {
+                    if (i==0 && j==0)
+                    {
+                        continue;
+                    }
+                    inRowBorders = (index.x + i >= 0 && index.x + i <= _blockMap.GetLength(0));
+                    inColumnBorders = (index.y + j >= 0 && index.y + j <= _blockMap.GetLength(1));
+                    if (inRowBorders && inColumnBorders)
+                    {
+                        FoundPowerUpTarget(index.x+i,index.y+j, startOrder);
+                    }
+                }
+            }
+        }
+
+        private bool InteractColorBlock(Vector2Int index, IBlock block, out IBlock interactableBlock)
+        {
+            interactableBlock = null;
+            var blockType = block.GetBlockType();
+            SearchBlockInSameTypeNeighbor(blockType, index);
+            if (_foundedBlockIndexesAndOrders.Any((tuple => GetBlock(tuple.Item1).GetBlockType() == blockType)))
+            {
+                {
+                    _foundedBlockIndexesAndOrders.Add((index,0));
+                    interactableBlock = block;
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private void SearchBlockInSameTypeNeighbor(BlockType blockType, Vector2Int searchIndex)
+        {
+            RecursiveSearchBlockInSameTypeNeighbor(blockType, searchIndex);
+        }
+
+        private void RecursiveSearchBlockInSameTypeNeighbor(BlockType blockType, Vector2Int searchIndex)
         {
             Vector2Int index;
             IBlock curBlock;
@@ -128,33 +255,23 @@ namespace Core.BlockSystem
 
                     index = new Vector2Int(x, y);
                     curBlock = _blockMap[index.x][index.y];
-                    if (curBlock==null)
+                    if (curBlock == null)
                     {
                         continue;
                     }
-                    if (curBlock.GetBlockType() == blockType && !_neighborCoordinates.Contains(index))
+
+                    var hasIndex = _foundedBlockIndexesAndOrders.Any(tuple => tuple.Item1 == index);
+                    if (curBlock.GetBlockType() == blockType && !hasIndex)
                     {
-                        _neighborCoordinates.Add(index);
-                        RecursiveSearchNeighbours(blockType, index);
+                        _foundedBlockIndexesAndOrders.Add((index, 0));
+                        RecursiveSearchBlockInSameTypeNeighbor(blockType, index);
                     }
                     else if (curBlock is ObstacleBlock)
-                        if (_foundedObstacleCoordinatesAndInteractCounts.Any(foundedObstacle=>foundedObstacle.Item1==index))
-                        {
-                            var foundedObstacleCoordinateAndInteractCountIndex =
-                                _foundedObstacleCoordinatesAndInteractCounts.FindIndex(foundedObstacle =>
-                                    foundedObstacle.Item1 == index);
-                            _foundedObstacleCoordinatesAndInteractCounts
-                                [foundedObstacleCoordinateAndInteractCountIndex] = (index,
-                                _foundedObstacleCoordinatesAndInteractCounts[
-                                    foundedObstacleCoordinateAndInteractCountIndex].Item2 + 1);
-                        }
-                        else
-                        {
-                            _foundedObstacleCoordinatesAndInteractCounts.Add((index,1));
-                        }
+                    {
+                        _foundedBlockIndexesAndOrders.Add((index, 0));
+                    }
                 }
             }
         }
-
     }
 }

@@ -2,7 +2,7 @@
 
 namespace Core.BlockSystem.Block
 {
-    public class BombBlock : MonoBehaviour
+    public class BombBlock : PowerUpBlock
     {
         
     }

@@ -1,6 +1,4 @@
-﻿using Core.ParticleSystems;
-using ParticleSystems;
-using UnityEngine;
+﻿using UnityEngine;
 
 namespace Core.BlockSystem.Block
 {
@@ -8,12 +6,24 @@ namespace Core.BlockSystem.Block
     {
         [SerializeField] private SpriteRenderer spriteRenderer;
         [SerializeField] private Sprite[] rocketSprites;
+        [SerializeField] private RocketHead[] horizontalRocketHeads;
+        [SerializeField] private RocketHead[] verticalRocketHeads;
 
+        private float _rocketHeadSpeed;
+        private (Vector2, Vector2) _rocketHeadTargets;
+        
         private bool _rocketDirectionIsHorizontal;
+        public bool RocketDirectionIsHorizontal => _rocketDirectionIsHorizontal;
 
         public override void Placed()
         {
             SetRocketDirection();
+        }
+
+        public void SetRocketHeads((Vector2, Vector2) targetPositions, float speed)
+        {
+            _rocketHeadTargets = targetPositions;
+            _rocketHeadSpeed = speed;
         }
 
         private void SetRocketDirection()
@@ -25,9 +35,9 @@ namespace Core.BlockSystem.Block
         
         protected override void PlayBlastParticle()
         {
-            ParticleManager.Instance.PlayParticle(
-                _rocketDirectionIsHorizontal ? ParticleType.RocketBlockHorizontal : ParticleType.RocketBlockVertical,
-                transform.position);
+            var rocketHeads = _rocketDirectionIsHorizontal ? horizontalRocketHeads : verticalRocketHeads;
+            rocketHeads[0].TriggerHead(_rocketHeadTargets.Item1, _rocketHeadSpeed);
+            rocketHeads[1].TriggerHead(_rocketHeadTargets.Item2, _rocketHeadSpeed);
         }
     }
 }

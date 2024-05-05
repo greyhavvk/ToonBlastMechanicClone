@@ -1,5 +1,6 @@
 ﻿using System;
 using Core.BlockSystem.Block;
+using ScriptableObject;
 using UnityEngine;
 
 namespace Managers

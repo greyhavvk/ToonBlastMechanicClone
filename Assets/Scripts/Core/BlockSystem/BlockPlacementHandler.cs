@@ -8,11 +8,11 @@ using UnityEngine;
 
 namespace Core.BlockSystem
 {
-    public class BlockMovementAndPositionHandler : MonoBehaviour
+    public class BlockPlacementHandler : MonoBehaviour
     {
-        public static BlockMovementAndPositionHandler Instance;
+        public static BlockPlacementHandler Instance;
         public Action OnFallEnded;
-        public Action<List<IBlock>> OnBlastInCenterAnimationEnded;
+        public Action<List<IBlock>, Vector2Int> OnMoveToCenterAnimationEnded;
         private const float FallSpeed = 5f;
         private const float MoveCenterTime = .5f;
         private const float SpawnFallingAbovePositionY=3;
@@ -22,8 +22,6 @@ namespace Core.BlockSystem
             SetInstance();
         }
 
-        
-        
         private void SetInstance()
         {
             if (Instance==null)
@@ -38,12 +36,7 @@ namespace Core.BlockSystem
             {
                 for (int j = 0; j < blocks.GetLength(1); j++)
                 {
-                    var blockPositionOnGrid = new Vector2Int(i,j);
-                    if (GridMapManager.Instance.CheckCellExist(blockPositionOnGrid))
-                    {
-                        blocks[i][j].GetTransform().position = GridMapManager.Instance.GetCellPosition(blockPositionOnGrid);
-                        GridMapManager.Instance.FillCell(blockPositionOnGrid);
-                    } 
+                    PlaceBlock(new Vector2Int(i,j), blocks[i][j]);
                 }
             }
         }
@@ -97,7 +90,7 @@ namespace Core.BlockSystem
             }
         }
         
-        public async void BlastInCenter(Vector3 centerPosition, List<IBlock> blocksThatWillBlast)
+        public async void MoveBlocksToCenter(Vector2 centerPosition, List<IBlock> blocksThatWillBlast, Vector2Int centerIndex)
         {
             List<UniTask> taskList = new List<UniTask>();
 
@@ -105,15 +98,36 @@ namespace Core.BlockSystem
             {
                 RemoveBlockOnGridMap(blockThatWillBlast.GetTransform().position);
                 var tween = blockThatWillBlast.GetTransform().DOMove(centerPosition, MoveCenterTime)
-                    .SetEase(Ease.Linear).OnComplete((() =>
-                    {
-                        blockThatWillBlast.BlastBlock();
-                    }));
+                    .SetEase(Ease.Linear);
                 taskList.Add(tween.ToUniTask());
             }
             
             await UniTask.WhenAll(taskList);
-            OnBlastInCenterAnimationEnded?.Invoke(blocksThatWillBlast);
+            OnMoveToCenterAnimationEnded?.Invoke(blocksThatWillBlast, centerIndex);
+        }
+
+        public void PlaceBlock(Vector2Int centerIndex, IBlock block)
+        {
+            if (GridMapManager.Instance.CheckCellExist(centerIndex))
+            {
+                block.GetTransform().position = GridMapManager.Instance.GetCellPosition(centerIndex);
+                GridMapManager.Instance.FillCell(centerIndex);
+            } 
+        }
+
+        public (Vector2,Vector2) GetPositionsOfSideOfRow(int rowIndex)
+        {
+            return GridMapManager.Instance.GetPositionsOfSideOfRow(rowIndex);
+        }
+        
+        public (Vector2,Vector2) GetPositionsOfSideOfColumn(int columnIndex)
+        {
+            return GridMapManager.Instance.GetPositionsOfSideOfColumn(columnIndex);
+        }
+
+        public float GetDistanceBetweenBlocks()
+        {
+            return GridMapManager.Instance.GetCellScaleY();
         }
     }
 }

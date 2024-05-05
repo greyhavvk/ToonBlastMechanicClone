@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using BlockSystem;
+using System.Linq;
 using Core.BlockSystem;
 using Core.BlockSystem.Block;
 using Cysharp.Threading.Tasks;
@@ -10,23 +10,28 @@ namespace Managers
 {
     public class BlockManager : MonoBehaviour
     {
+        [SerializeField] private int minBlastForMakingBomb;
+        [SerializeField] private int minBlastForMakingRocket;
+        
         public Action OnBlocksSettled;
         public Action OnBlocksMoving;
 
+        private int _timePerOrder = 100;
+
         public void Initialize(BlockType[][] getGridMapBlockSettlement)
         {
-            BlockMovementAndPositionHandler.Instance.OnFallEnded += FallEnded;
-            BlockMovementAndPositionHandler.Instance.OnBlastInCenterAnimationEnded += BlastInCenterAnimationComplete;
+            BlockPlacementHandler.Instance.OnFallEnded += FallEnded;
+            BlockPlacementHandler.Instance.OnMoveToCenterAnimationEnded += MoveToCenterAnimationComplete;
            
             var generatedBlocks = BlockFillingHandler.Instance.SpawnRequestedBlocksByLevel(getGridMapBlockSettlement);
-            BlockMovementAndPositionHandler.Instance.PlaceInitialBlocks(generatedBlocks);
+            BlockPlacementHandler.Instance.PlaceInitialBlocks(generatedBlocks);
             BlockSearchHandler.Instance.SetBlockMap(generatedBlocks);
         }
 
         private void OnDestroy()
         {
-            BlockMovementAndPositionHandler.Instance.OnFallEnded -= FallEnded;
-            BlockMovementAndPositionHandler.Instance.OnBlastInCenterAnimationEnded -= BlastInCenterAnimationComplete;
+            BlockPlacementHandler.Instance.OnFallEnded -= FallEnded;
+            BlockPlacementHandler.Instance.OnMoveToCenterAnimationEnded -= MoveToCenterAnimationComplete;
         }
 
         public void TouchDetected(Vector2 worldPosition)
@@ -43,53 +48,126 @@ namespace Managers
             }
         }
 
-        private void BlastInCenterAnimationComplete(List<IBlock> blocksThatBlasted)
+        private void MoveToCenterAnimationComplete(List<IBlock> blocksThatBlasted, Vector2Int centerIndex)
         {
             foreach (var blockBlasted in blocksThatBlasted)
             {
                BlockSearchHandler.Instance.RemoveBlockFromMap(blockBlasted);
+               blockBlasted.BlastBlock();
             }
 
             var blockMap = BlockSearchHandler.Instance.BlockMap;
-            var (columnIndexAndFillingBlocks, newMap)=BlockFillingHandler.Instance.UpdateBlockMap(blockMap);
+            MakePowerUp(blocksThatBlasted, centerIndex);
+            FallBlocks(blockMap);
+        }
+
+        private static void FallBlocks(IBlock[][] blockMap)
+        {
+            var (columnIndexAndFillingBlocks, newMap) = BlockFillingHandler.Instance.UpdateBlockMap(blockMap);
             BlockSearchHandler.Instance.SetBlockMap(blockMap);
             foreach (var columnIndexAndFillingBlock in columnIndexAndFillingBlocks)
             {
-                BlockMovementAndPositionHandler.Instance.PlaceFillingBlock(columnIndexAndFillingBlock.Item2,
+                BlockPlacementHandler.Instance.PlaceFillingBlock(columnIndexAndFillingBlock.Item2,
                     columnIndexAndFillingBlock.Item1);
             }
 
-            BlockMovementAndPositionHandler.Instance.RepositionBlocks(newMap);
+            BlockPlacementHandler.Instance.RepositionBlocks(newMap);
+            BlockSearchHandler.Instance.ResetSearchLists();
+        }
+
+        private void MakePowerUp(List<IBlock> blocksThatBlasted, Vector2Int centerIndex)
+        {
+            IBlock powerUp = null;
+            if (blocksThatBlasted.Count >= minBlastForMakingBomb)
+            {
+                powerUp = BlockFillingHandler.Instance.SpawnBlock(BlockType.BombBlock);
+            }
+            else if (blocksThatBlasted.Count >= minBlastForMakingBomb)
+            {
+                powerUp = BlockFillingHandler.Instance.SpawnBlock(BlockType.RocketBlock);
+            }
+
+            if (powerUp != null)
+            {
+                BlockPlacementHandler.Instance.PlaceBlock(centerIndex, powerUp);
+                BlockSearchHandler.Instance.AddNewBlock(centerIndex, powerUp);
+            }
         }
 
         private void ActivateInteractedBlock(Vector2Int cellIndex, IBlock interactedBlock)
         {
             if (interactedBlock is ColorBlock)
             {
-                List<IBlock> blocksThatWillBlast = BlockSearchHandler.Instance.GetNeighbor();
-                var centerPosition = interactedBlock.GetTransform().position;
-                BlockMovementAndPositionHandler.Instance.BlastInCenter(centerPosition, blocksThatWillBlast);
-                ReduceObstaclesHitPoint();
+                BlastColorBlocks(interactedBlock, cellIndex);
             }
             else if (interactedBlock is PowerUpBlock)
             {
-                //TODO şimdi bunlara el atılacak.
+                BlastPowerUp(cellIndex);
             }
+        }
+
+        private async void BlastPowerUp(Vector2Int cellIndex)
+        {
+            int lastOrderNumber = 0;
+            var blastInOrderList = BlockSearchHandler.Instance.FoundedBlockIndexesAndOrders;
+            foreach (var blastOrder in blastInOrderList)
+            {
+                var block = BlockSearchHandler.Instance.GetBlock(blastOrder.Item1);
+                if (block is RocketBlock rocketBlock)
+                {
+                    var targets = rocketBlock.RocketDirectionIsHorizontal
+                        ? BlockPlacementHandler.Instance.GetPositionsOfSideOfRow(blastOrder.Item1.x)
+                        : BlockPlacementHandler.Instance.GetPositionsOfSideOfColumn(blastOrder.Item1.y);
+                    var speed = BlockPlacementHandler.Instance.GetDistanceBetweenBlocks() / _timePerOrder;
+                    rocketBlock.SetRocketHeads(targets, speed);
+                }
+                block.DelayedBlastBlock((blastOrder.Item2)*_timePerOrder);
+                lastOrderNumber = Mathf.Max(lastOrderNumber, blastOrder.Item2);
+            }
+
+            await UniTask.Delay(lastOrderNumber * _timePerOrder);
+            await UniTask.DelayFrame(1);
+            
+            foreach (var blockBlasted in blastInOrderList)
+            {
+                BlockSearchHandler.Instance.RemoveBlockFromMap(blockBlasted.Item1);
+                BlockPlacementHandler.Instance.RemoveBlockOnGridMap(blockBlasted.Item1);
+            }
+
+            var blockMap = BlockSearchHandler.Instance.BlockMap;
+            FallBlocks(blockMap);
+        }
+
+        private void BlastColorBlocks(IBlock interactedBlock,Vector2Int cellIndex)
+        {
+            var foundedColorBlocksIndexesAndOrders = BlockSearchHandler.Instance.FoundedBlockIndexesAndOrders.FindAll(blockIndexAndOrder =>
+                BlockSearchHandler.Instance.GetBlock(blockIndexAndOrder.Item1) is ColorBlock);
+            var blocksThatWillBlast =foundedColorBlocksIndexesAndOrders.Select(blockIndexAndOrder => BlockSearchHandler.Instance.GetBlock(blockIndexAndOrder.Item1)).ToList();
+            var centerPosition = interactedBlock.GetTransform().position;
+            foreach (var foundedColorBlocksIndexAndOrder in foundedColorBlocksIndexesAndOrders)
+            {
+                BlockSearchHandler.Instance.RemoveBlockFromMap(foundedColorBlocksIndexAndOrder.Item1);
+            }
+            BlockPlacementHandler.Instance.MoveBlocksToCenter(centerPosition, blocksThatWillBlast,cellIndex);
+            ReduceObstaclesHitPoint();
         }
 
         private void ReduceObstaclesHitPoint()
         {
             var obstacleAndInteractedCountList =
-                BlockSearchHandler.Instance.GetObstacleThatInteractedAndInteractedCount();
+                BlockSearchHandler.Instance.FoundedBlockIndexesAndOrders.FindAll(blockIndexAndOrder =>
+                    BlockSearchHandler.Instance.GetBlock(blockIndexAndOrder.Item1) is ObstacleBlock);
             foreach (var obstacleAndInteractedCount in obstacleAndInteractedCountList)
             {
-                var obstacle = obstacleAndInteractedCount.Item1;
-                var count = obstacleAndInteractedCount.Item2;
-                obstacle.ReduceHitPoint(count);
-                if (!obstacle.IsBroken) continue;
-                BlockSearchHandler.Instance.RemoveBlockFromMap(obstacle);
-                BlockMovementAndPositionHandler.Instance.RemoveBlockOnGridMap(obstacle.GetTransform().position);
-                obstacle.BlastBlock();
+                var obstacle = BlockSearchHandler.Instance.GetBlock(obstacleAndInteractedCount.Item1) as ObstacleBlock;
+                if (obstacle != null)
+                {
+                    obstacle.ReduceHitPoint();
+                    if (!obstacle.IsBroken) continue;
+                    BlockSearchHandler.Instance.RemoveBlockFromMap(obstacleAndInteractedCount.Item1);
+                    BlockPlacementHandler.Instance.RemoveBlockOnGridMap(obstacle.GetTransform().position);
+                    obstacle.BlastBlock();
+                }
             }
         }
 

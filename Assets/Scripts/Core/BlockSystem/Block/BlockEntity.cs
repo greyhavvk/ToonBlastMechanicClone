@@ -1,5 +1,5 @@
-﻿using Factory_and_ObjectPool;
-using ParticleSystems;
+﻿using Cysharp.Threading.Tasks;
+using Factory_and_ObjectPool;
 using UnityEngine;
 
 namespace Core.BlockSystem.Block
@@ -22,6 +22,12 @@ namespace Core.BlockSystem.Block
         {
             PlayBlastParticle();
             ReturnToPool();
+        }
+
+        public async void DelayedBlastBlock(int delay)
+        {
+            await UniTask.Delay(delay);
+            BlastBlock();
         }
 
         protected virtual void PlayBlastParticle()

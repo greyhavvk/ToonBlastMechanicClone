@@ -80,5 +80,17 @@ namespace Managers
         {
             return gridMapCreator.GetCellIndex(worldPosition);
         }
+
+        public (Vector2, Vector2) GetPositionsOfSideOfRow(int rowIndex)
+        {
+            return (GetCellPosition(new Vector2Int(rowIndex, 0)),
+                GetCellPosition(new Vector2Int(rowIndex, _cellDatas.GetLength(1))));
+        }
+
+        public (Vector2, Vector2) GetPositionsOfSideOfColumn(int columnIndex)
+        {
+            return (GetCellPosition(new Vector2Int(0, columnIndex)),
+                GetCellPosition(new Vector2Int(_cellDatas.GetLength(0), columnIndex)));
+        }
     }
 }
