@@ -11,6 +11,7 @@ namespace Core.TrackerSystem
         public Action OnNoMoveLeft;
         
         private int _moveCount;
+        private int _signalDelay;
         
         private void Awake()
         {

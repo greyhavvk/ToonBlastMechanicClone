@@ -13,6 +13,7 @@ namespace Managers
 
         private int _currentLevelIndex = 0;
         private LevelSo _currentLevel;
+        private int NextLevelIndex => _currentLevelIndex + 1;
 
         public void Initialize()
         {
@@ -20,10 +21,9 @@ namespace Managers
             _currentLevel = levels[_currentLevelIndex];
         }
 
-        public void SaveNewLevelIndex()
+        private void SaveNewLevelIndex()
         {
-            _currentLevelIndex++;
-            PlayerPrefs.SetInt("Level",_currentLevelIndex);
+            PlayerPrefs.SetInt("Level",NextLevelIndex);
         }
 
         public Vector2 GetGridCellSize()
@@ -49,6 +49,16 @@ namespace Managers
         public SerializableDictionary<BlockType, int> GetGoals()
         {
             return _currentLevel.goals;
+        }
+
+        public int GetLevelIndex()
+        {
+            return NextLevelIndex;
+        }
+
+        public void IncreaseLevelIndex()
+        {
+            SaveNewLevelIndex();
         }
     }
 }

@@ -43,7 +43,12 @@ namespace Core.BlockSystem
 
         public IBlock GetBlock(Vector2Int index)
         {
-            return _blockMap[index.x][index.y];
+            if (index.x>=0 && index.x<_blockMap.Length && index.y>=0 && index.y<_blockMap[0].Length)
+            {
+                return _blockMap[index.x][index.y];
+            }
+
+            return null;
         }
 
         public void RemoveBlockFromMap(Vector2Int index)
@@ -82,7 +87,6 @@ namespace Core.BlockSystem
                 case PowerUpBlock:
                     InteractPowerUpBlock(index, block);
                     return block;
-                    break;
             }
 
             return null;
@@ -118,6 +122,8 @@ namespace Core.BlockSystem
             }
         }
 
+        
+        //TODO roketin sıkıntısı bence burada
         private void SearchRocketTargets(Vector2Int index, bool rocketDirectionIsHorizontal, int startOrder)
         {
             int x, y;
@@ -147,8 +153,10 @@ namespace Core.BlockSystem
 
                         currentOrder++;
                     }
-
-                    break;
+                    else
+                    {
+                        break;
+                    }
                 }
             }
             else
@@ -175,8 +183,10 @@ namespace Core.BlockSystem
 
                         currentOrder++;
                     }
-
-                    break;
+                    else
+                    {
+                        break;
+                    }
                 }
             }
 
@@ -223,19 +233,17 @@ namespace Core.BlockSystem
             var blockType = block.GetBlockType();
 
             SearchBlockInSameTypeNeighbor(blockType, index);
-            if (_foundedBlockIndexesAndOrders.Any((tuple => GetBlock(tuple.Item1).GetBlockType() == blockType)))
+            if (!_foundedBlockIndexesAndOrders.Any((tuple => GetBlock(tuple.Item1)?.GetBlockType() == blockType)))
+                return false;
+            if (!_foundedBlockIndexesAndOrders.Contains((index, 0)))
             {
-                if (!_foundedBlockIndexesAndOrders.Contains((index, 0)))
-                {
-                    _foundedBlockIndexesAndOrders.Add((index, 0));
+                _foundedBlockIndexesAndOrders.Add((index, 0));
 
-                }
-
-                interactableBlock = block;
-                return true;
             }
 
-            return false;
+            interactableBlock = block;
+            return true;
+
         }
 
         private void SearchBlockInSameTypeNeighbor(BlockType blockType, Vector2Int searchIndex)
@@ -264,10 +272,8 @@ namespace Core.BlockSystem
         {
             if (!(x < 0 || x >= _blockMap.Length || y < 0 || y >= _blockMap[0].Length))
             {
-                IBlock curBlock;
                 Vector2Int index = new Vector2Int(x, y);
-                curBlock = _blockMap[index.x][index.y];
-                Debug.Log(curBlock + index.ToString());
+                var curBlock = _blockMap[index.x][index.y];
                 if (curBlock != null)
                 {
                     var hasIndex = _foundedBlockIndexesAndOrders.Any(tuple => tuple.Item1 == index);
@@ -286,32 +292,32 @@ namespace Core.BlockSystem
             List<ObstacleBlock> obstacleBlocks=new List<ObstacleBlock>();
             int x = searchIndex.x;
             int y = searchIndex.y + 1;
-            var obstacle=GetBlock(new Vector2Int(x, y));
-            if (obstacle!=null && obstacle is ObstacleBlock)
+            var block=GetBlock(new Vector2Int(x, y));
+            if (block is ObstacleBlock obstacleBlock)
             {
-                obstacleBlocks.Add(obstacle as ObstacleBlock);
+                obstacleBlocks.Add(obstacleBlock);
             }
             
             y = searchIndex.y - 1;
-            obstacle=GetBlock(new Vector2Int(x, y));
-            if (obstacle!=null && obstacle is ObstacleBlock)
+            block=GetBlock(new Vector2Int(x, y));
+            if (block is ObstacleBlock obstacleBlock1)
             {
-                obstacleBlocks.Add(obstacle as ObstacleBlock);
+                obstacleBlocks.Add(obstacleBlock1);
             }
             
             x = searchIndex.x + 1;
             y = searchIndex.y;
-            obstacle=GetBlock(new Vector2Int(x, y));
-            if (obstacle!=null && obstacle is ObstacleBlock)
+            block=GetBlock(new Vector2Int(x, y));
+            if (block is ObstacleBlock obstacleBlock2)
             {
-                obstacleBlocks.Add(obstacle as ObstacleBlock);
+                obstacleBlocks.Add(obstacleBlock2);
             }
             
             x = searchIndex.x - 1;
-            obstacle=GetBlock(new Vector2Int(x, y));
-            if (obstacle!=null && obstacle is ObstacleBlock)
+            block=GetBlock(new Vector2Int(x, y));
+            if (block is ObstacleBlock obstacleBlock3)
             {
-                obstacleBlocks.Add(obstacle as ObstacleBlock);
+                obstacleBlocks.Add(obstacleBlock3);
             }
 
             return obstacleBlocks.ToArray();

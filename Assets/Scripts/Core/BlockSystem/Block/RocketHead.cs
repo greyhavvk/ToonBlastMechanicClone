@@ -9,6 +9,7 @@ namespace Core.BlockSystem.Block
         
         public void TriggerHead(Vector2 destination, float speed)
         {
+            Debug.Log("triggered");
             var parent = transform.parent;
             var oldLocalPosition = transform.localPosition;
             transform.parent = null;

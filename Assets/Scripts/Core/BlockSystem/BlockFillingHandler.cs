@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using BlockSystem;
 using Core.BlockSystem.Block;
 using Core.Factory_and_ObjectPool;
 using Core.SerializableSetting;
@@ -80,8 +79,6 @@ namespace Core.BlockSystem
             return randomBlockType;
         }
         
-        
-        //TODO burada bir sıkıntı var ama ne oldugunu çözemedim henüz
         public (List<(int,IBlock[])>, IBlock[][]) UpdateBlockMap(IBlock[][] blockMap)
         {
             var newMap= CalculateNewMap(blockMap);
@@ -91,32 +88,6 @@ namespace Core.BlockSystem
             
             
             return (columnIndexAndFillingBlocks, newMap);
-        }
-
-        private void HaveJustOne(IBlock[][] blockMap, List<(int, IBlock[])> columnIndexAndFillingBlocks)
-        {
-            Dictionary<IBlock,Vector2Int> uniqueList=new Dictionary<IBlock,Vector2Int>();
-
-            for (int i = 0; i < blockMap.Length; i++)
-            {
-                for (int j = 0; j <  blockMap[0].Length; j++)
-                {
-                    var block = blockMap[i][j];
-                    if (block!=null)
-                    {
-                        if (uniqueList.ContainsKey(block))
-                        {
-                            var founded = uniqueList[block];
-                            Debug.Log(block + " " + new Vector2Int(i,j) + " "+ founded);
-                        }
-                        else
-                        {
-                            uniqueList.Add(blockMap[i][j], new Vector2Int(i,j));
-                        }
-                    }
-                }
-            }
-            
         }
 
         private IBlock[][] CalculateNewMap(IBlock[][] blockMap)
@@ -173,17 +144,6 @@ namespace Core.BlockSystem
                     else
                     {
                         var newBlock = blockFactories.GetValue(GetRandomBulletType()).GetProduct() as IBlock;
-
-                        for (int k = 0; k < blockMap.Length; k++)
-                        {
-                            for (int l = 0; l < blockMap[0].Length; l++)
-                            {
-                                if (blockMap[k][l]==newBlock)
-                                {
-                                    Debug.Log("aynısını spawn etti" + newBlock);
-                                }
-                            }
-                        }
                         newBlock?.Placed();
                         spawnedBlocks.Add(newBlock);
                         blockMap[i][j] = newBlock;
@@ -193,29 +153,7 @@ namespace Core.BlockSystem
                 spawnedBlocks.Clear();
             }
            
-            HaveJustOne(blockMap,columnIndexAndFillingBlocks);
             return columnIndexAndFillingBlocks;
-        }
-
-        private int FindDeeperEmptyBlockMapRowIndex(int currentColumnIndex, int startRowIndex, IBlock[][] blockMap)
-        {
-            int foundedIndex = startRowIndex;
-            int deeper = blockMap.Length-1;
-            for (int i = deeper; i >= startRowIndex; i--)
-            {
-                var block = blockMap[i][currentColumnIndex];
-                if (block==null)
-                {
-                    foundedIndex = Mathf.Max(i, foundedIndex);
-                }
-                else if (block.GetBlockType()==BlockType.ObstacleBlock)
-                {
-                    foundedIndex = startRowIndex;
-                }
-                
-            }
-
-            return foundedIndex;
         }
     }
 }

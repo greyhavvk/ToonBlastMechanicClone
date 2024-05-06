@@ -17,7 +17,7 @@ namespace Managers
         public Action OnBlocksSettled;
         public Action OnBlocksMoving;
 
-        private int _timePerOrder = 100;
+        private const int TimePerOrder = 100;
 
         public void Initialize(BlockType[][] getGridMapBlockSettlement)
         {
@@ -108,31 +108,39 @@ namespace Managers
             }
             else if (interactedBlock is PowerUpBlock)
             {
-                BlastPowerUp(cellIndex);
+                BlastPowerUp();
             }
         }
 
-        private async void BlastPowerUp(Vector2Int cellIndex)
+        private async void BlastPowerUp()
         {
             int lastOrderNumber = 0;
             var blastInOrderList = BlockSearchHandler.Instance.FoundedBlockIndexesAndOrders;
             foreach (var blastOrder in blastInOrderList)
             {
                 var block = BlockSearchHandler.Instance.GetBlock(blastOrder.Item1);
-                if (block is RocketBlock rocketBlock)
+                switch (block)
                 {
-                    var targets = rocketBlock.RocketDirectionIsHorizontal
-                        ? BlockPlacementHandler.Instance.GetPositionsOfSideOfRow(blastOrder.Item1.x)
-                        : BlockPlacementHandler.Instance.GetPositionsOfSideOfColumn(blastOrder.Item1.y);
-                    var speed = BlockPlacementHandler.Instance.GetDistanceBetweenBlocks() / _timePerOrder;
-                    rocketBlock.SetRocketHeads(targets, speed);
+                    case null:
+                        continue;
+                    case RocketBlock rocketBlock:
+                    {
+                        var targets = rocketBlock.RocketDirectionIsHorizontal
+                            ? BlockPlacementHandler.Instance.GetPositionsOfSideOfRow(blastOrder.Item1.x)
+                            : BlockPlacementHandler.Instance.GetPositionsOfSideOfColumn(blastOrder.Item1.y);
+                        var speed = BlockPlacementHandler.Instance.GetDistanceBetweenBlocks() / TimePerOrder;
+                        rocketBlock.SetRocketHeads(targets, speed);
+                        break;
+                    }
                 }
 
-                block.DelayedBlastBlock((blastOrder.Item2) * _timePerOrder);
+                var delay = (blastOrder.Item2) * TimePerOrder;
+                block.DelayedBlastBlock((blastOrder.Item2) * TimePerOrder);
+                ReduceObstacleHitPoint(blastOrder.Item1,delay);
                 lastOrderNumber = Mathf.Max(lastOrderNumber, blastOrder.Item2);
             }
 
-            await UniTask.Delay(lastOrderNumber * _timePerOrder);
+            await UniTask.Delay(lastOrderNumber * TimePerOrder);
             await UniTask.DelayFrame(1);
 
             foreach (var blockBlasted in blastInOrderList)
@@ -168,21 +176,25 @@ namespace Managers
         {
             foreach (var blockThatWillBlastIndex in blockThatWillBlastIndexes)
             {
-                var obstacles = BlockSearchHandler.Instance.GetObstacleBlockNeighbor(blockThatWillBlastIndex);
-                foreach (var obstacle in obstacles)
-                {
-                    if (obstacle != null)
-                    {
-                        obstacle.ReduceHitPoint();
-                        if (!obstacle.IsBroken) continue;
-                        BlockSearchHandler.Instance.RemoveBlockFromMap(obstacle);
-                        BlockPlacementHandler.Instance.RemoveBlockOnGridMap(obstacle.GetTransform().position);
-                        obstacle.BlastBlock();
-                    }
-                }
-
-
+                ReduceObstacleHitPoint(blockThatWillBlastIndex);
             }
+        }
+
+        private async void ReduceObstacleHitPoint(Vector2Int blockThatWillBlastIndex,int delay=0)
+        {
+            var obstacles = BlockSearchHandler.Instance.GetObstacleBlockNeighbor(blockThatWillBlastIndex);
+            foreach (var obstacle in obstacles)
+            {
+                if (obstacle)
+                {
+                    obstacle.ReduceHitPoint();
+                    if (!obstacle.IsBroken) continue;
+                    BlockSearchHandler.Instance.RemoveBlockFromMap(obstacle);
+                    BlockPlacementHandler.Instance.RemoveBlockOnGridMap(obstacle.GetTransform().position);
+                    obstacle.BlastBlock();
+                }
+            }
+            await UniTask.Delay(delay);
         }
 
         private void CheckShuffleNecessary()

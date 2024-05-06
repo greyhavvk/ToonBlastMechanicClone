@@ -14,7 +14,7 @@ namespace Core.BlockSystem
         public Action OnFallEnded;
         public Action<List<IBlock>, Vector2Int> OnMoveToCenterAnimationEnded;
         private const float FallSpeed = 5f;
-        private const float MoveCenterTime = .5f;
+        private const float MoveCenterTime = .2f;
         private const float SpawnFallingAbovePositionY=3;
 
         private void Awake()

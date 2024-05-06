@@ -1,9 +1,8 @@
 ﻿using BlockSystem;
-using Core.Factory_and_ObjectPool;
 using Factory_and_ObjectPool;
 using UnityEngine;
 
-namespace ParticleSystems
+namespace Core.Factory_and_ObjectPool
 {
     public class ParticleFactory : Factory
     {

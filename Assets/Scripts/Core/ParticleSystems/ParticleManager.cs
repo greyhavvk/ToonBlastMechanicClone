@@ -1,4 +1,5 @@
-﻿using Core.SerializableSetting;
+﻿using Core.Factory_and_ObjectPool;
+using Core.SerializableSetting;
 using ParticleSystems;
 using UnityEngine;
 
@@ -27,9 +28,9 @@ namespace Core.ParticleSystems
         {
             if (!particleFactories.ContainsKey(particleType)) return;
             var particle = particleFactories.GetValue(particleType).GetProduct() as ParticleEntity;
+            if (!particle) return;
             particle.transform.position = position;
             particle.Play();
-
         }
     }
 }

@@ -28,7 +28,7 @@ namespace Core.BlockSystem.Block
 
         private void SetRocketDirection()
         {
-            int directionIndex = Random.Range(0, 1);
+            int directionIndex = Random.Range(0, 2);
             _rocketDirectionIsHorizontal =(directionIndex  == 0);
             horizontalHeadParent.SetActive(_rocketDirectionIsHorizontal);
             verticalHeadParent.SetActive(!_rocketDirectionIsHorizontal);

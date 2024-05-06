@@ -23,5 +23,10 @@ namespace Core.UI
         {
             OnButtonClicked?.Invoke();
         }
+
+        public void ClosePanel()
+        {
+            panel.SetActive(false);
+        }
     }
 }

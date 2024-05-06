@@ -56,6 +56,7 @@ namespace Managers
         private void Unsubscribe()
         {
             uiManager.OnReloadButtonClicked -= ReLoadGameScene;
+            goalTracker.OnGoalComplete -= GameSuccess;
             UnsubscribeInputAndTrackerEvents();
         }
 
@@ -64,14 +65,13 @@ namespace Managers
             blockManager.OnBlocksSettled -= inputManager.EnableInputs;
             blockManager.OnBlocksMoving -= inputManager.DisableInputs;
             inputManager.OnClickConfirmed -= blockManager.TouchDetected;
-            goalTracker.OnGoalComplete -= GameSuccess;
             moveCountTracker.OnNoMoveLeft -= GameFail;
             timeTracker.OnTimeOver -= GameFail;
         }
 
         private void ReLoadGameScene()
         {
-            SceneManager.LoadScene(0);
+            SceneManager.LoadScene(levelManager.GetLevelIndex());
         }
 
         private void GameFail()
@@ -85,10 +85,12 @@ namespace Managers
 
         private void GameSuccess()
         {
+            goalTracker.OnGoalComplete -= GameSuccess;
             UnsubscribeInputAndTrackerEvents();
             inputManager.DisableInputs();
             timeTracker.StopTimeTracker();
             uiManager.OpenSuccessPanel();
+            levelManager.IncreaseLevelIndex();
         }
     }
 }
