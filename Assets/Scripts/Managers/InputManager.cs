@@ -1,10 +1,9 @@
 ﻿using System;
 using UnityEngine;
-using UnityEngine.EventSystems;
 
 namespace Managers
 {
-    public class InputManager : MonoBehaviour, IPointerDownHandler
+    public class InputManager : MonoBehaviour
     {
         [SerializeField] private Camera gameCamera;
         private const float CameraDistanceFromPlayGround = 5;
@@ -17,10 +16,10 @@ namespace Managers
             return gameCamera.ScreenToWorldPoint(new Vector3(touchPosition.x, touchPosition.y, CameraDistanceFromPlayGround));
             
         }
-        
-        public void OnPointerDown(PointerEventData eventData)
+
+        private void Update()
         {
-            if (_enable)
+            if (_enable && Input.GetMouseButtonDown(0))
             {
                 OnClickConfirmed?.Invoke(CalculateTouchPosition(Input.mousePosition));
             }
@@ -28,11 +27,13 @@ namespace Managers
 
         public void EnableInputs()
         {
+            enabled = true;
             _enable=true;
         }
         
         public void DisableInputs()
         {
+            enabled = false;
             _enable=false;
         }
     }

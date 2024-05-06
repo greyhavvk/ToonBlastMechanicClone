@@ -9,9 +9,16 @@ namespace Core.BlockSystem.Block
     {
         [SerializeField] private int hitPoint;
 
+        public override void BlastBlock()
+        {
+            base.BlastBlock();
+            Debug.Log("blast emri geldi");
+        }
+
         public void ReduceHitPoint()
         {
             hitPoint = Mathf.Clamp(hitPoint - 1, 0, int.MaxValue);
+            Debug.Log("can düştü" + hitPoint);
         }
 
         public bool IsBroken => hitPoint == 0;

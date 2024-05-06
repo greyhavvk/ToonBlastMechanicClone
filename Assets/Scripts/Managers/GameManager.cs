@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using Core.TrackerSystem;
+using UnityEngine;
 using UnityEngine.SceneManagement;
 
 namespace Managers
@@ -10,6 +11,10 @@ namespace Managers
         [SerializeField] private UIManager uiManager;
         [SerializeField] private GridMapManager gridMapManager;
         [SerializeField] private BlockManager blockManager;
+
+        [SerializeField] private GoalTracker goalTracker;
+        [SerializeField] private MoveCountTracker moveCountTracker;
+        [SerializeField] private TimeTracker timeTracker;
         private void Start()
         {
             SubscribeEvents();
@@ -26,12 +31,15 @@ namespace Managers
             levelManager.Initialize();
             
             var cellSize = levelManager.GetGridCellSize();
-            var gridMapSize = new Vector2Int(levelManager.GetGridMapBlockSettlement().GetLength(0),
-                levelManager.GetGridMapBlockSettlement().GetLength(1));
-            
+            var gridMapSize = new Vector2Int(levelManager.GetGridMapBlockSettlement().Length,
+                levelManager.GetGridMapBlockSettlement()[0].Length);
+            inputManager.EnableInputs();
             gridMapManager.Initialize(gridMapSize, cellSize);
             blockManager.Initialize(levelManager.GetGridMapBlockSettlement());
             uiManager.Initialize();
+            goalTracker.SetGoals(levelManager.GetGoals());
+            moveCountTracker.SetMoveCount(levelManager.GetMoveCount());
+            timeTracker.StartTimer(levelManager.GetLevelTime());
         }
 
         private void SubscribeEvents()
@@ -40,14 +48,25 @@ namespace Managers
             blockManager.OnBlocksMoving += inputManager.DisableInputs;
             inputManager.OnClickConfirmed += blockManager.TouchDetected;
             uiManager.OnReloadButtonClicked += ReLoadGameScene;
+            goalTracker.OnGoalComplete += GameSuccess;
+            moveCountTracker.OnNoMoveLeft += GameFail;
+            timeTracker.OnTimeOver += GameFail;
         }
 
         private void Unsubscribe()
         {
+            uiManager.OnReloadButtonClicked -= ReLoadGameScene;
+            UnsubscribeInputAndTrackerEvents();
+        }
+
+        private void  UnsubscribeInputAndTrackerEvents()
+        {
             blockManager.OnBlocksSettled -= inputManager.EnableInputs;
             blockManager.OnBlocksMoving -= inputManager.DisableInputs;
             inputManager.OnClickConfirmed -= blockManager.TouchDetected;
-            uiManager.OnReloadButtonClicked -= ReLoadGameScene;
+            goalTracker.OnGoalComplete -= GameSuccess;
+            moveCountTracker.OnNoMoveLeft -= GameFail;
+            timeTracker.OnTimeOver -= GameFail;
         }
 
         private void ReLoadGameScene()
@@ -57,14 +76,19 @@ namespace Managers
 
         private void GameFail()
         {
-            inputManager.OnClickConfirmed -= blockManager.TouchDetected;
+            UnsubscribeInputAndTrackerEvents();
             inputManager.DisableInputs();
+            inputManager.DisableInputs();
+            timeTracker.StopTimeTracker();
+            uiManager.OpenFailPanel();
         }
 
         private void GameSuccess()
         {
-            inputManager.OnClickConfirmed -= blockManager.TouchDetected;
+            UnsubscribeInputAndTrackerEvents();
             inputManager.DisableInputs();
+            timeTracker.StopTimeTracker();
+            uiManager.OpenSuccessPanel();
         }
     }
 }

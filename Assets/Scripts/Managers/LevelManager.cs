@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
 using Core.BlockSystem.Block;
+using Core.SerializableSetting;
 using ScriptableObject;
 using UnityEngine;
 
@@ -31,7 +33,22 @@ namespace Managers
 
         public BlockType[][] GetGridMapBlockSettlement()
         {
-            return _currentLevel.gridMapBlockSettlement.ToArray();
+            return _currentLevel.GetGridMapBlockSettlement();
+        }
+
+        public int GetMoveCount()
+        {
+            return _currentLevel.moveCount;
+        }
+
+        public float GetLevelTime()
+        {
+            return _currentLevel.time;
+        }
+
+        public SerializableDictionary<BlockType, int> GetGoals()
+        {
+            return _currentLevel.goals;
         }
     }
 }

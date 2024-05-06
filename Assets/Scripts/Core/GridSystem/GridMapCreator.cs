@@ -6,7 +6,7 @@ namespace GridSystem
     {
         [SerializeField] private RectTransform gridFrame;
 
-        private const float FrameMargin = .1f;
+        private const float FrameMargin = .2f;
         private Vector2 _gridMapStartPoint;
         private Vector2 _cellSize;
     
@@ -21,10 +21,10 @@ namespace GridSystem
 
         private void SetGridFrame(Vector2Int gridMapSize)
         {
-            _gridMapStartPoint = new Vector2(_cellSize.x / 2 * (gridMapSize.x + 1),
-                _cellSize.y / 2 * (gridMapSize.y + 1));
-            Vector2 gridFrameSize = new Vector2(_cellSize.x * gridMapSize.x + FrameMargin,
-                _cellSize.y * gridMapSize.y + FrameMargin);
+            _gridMapStartPoint = new Vector2(_cellSize.x / 2 * (gridMapSize.y-1)*(-1),
+                _cellSize.y / 2 * (gridMapSize.x-1));
+            Vector2 gridFrameSize = new Vector2(_cellSize.x * gridMapSize.y + FrameMargin,
+                _cellSize.y * gridMapSize.x + FrameMargin);
             gridFrame.sizeDelta = gridFrameSize;
         }
 
@@ -37,7 +37,7 @@ namespace GridSystem
                 for (int j = 0; j < gridMapSize.y; j++)
                 {
                     Vector2 position = _gridMapStartPoint +
-                                       new Vector2(i * _cellSize.x, j * _cellSize.y * (-1));
+                                       new Vector2(j * _cellSize.x, i * _cellSize.y * (-1));
                     var cell = new CellData(position);
                     cellDatas[i][j]=cell;
                 }
@@ -48,8 +48,8 @@ namespace GridSystem
         public Vector2Int GetCellIndex(Vector2 worldPosition)
         {
             var localPosition= worldPosition - _gridMapStartPoint;
-            var x = Mathf.FloorToInt((localPosition.x / _cellSize.x) + _cellSize.x * .5f);
-            var y = -1*Mathf.FloorToInt((localPosition.y / _cellSize.y) + _cellSize.y * .5f);
+            var x = -1*Mathf.FloorToInt((localPosition.y / _cellSize.x) + _cellSize.x * .5f);
+            var y = Mathf.FloorToInt((localPosition.x / _cellSize.y) + _cellSize.y * .5f);
             return new Vector2Int(x, y);
         }
     }

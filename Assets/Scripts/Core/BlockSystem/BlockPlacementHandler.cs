@@ -32,9 +32,9 @@ namespace Core.BlockSystem
 
         public void PlaceInitialBlocks(IBlock[][] blocks)
         {
-            for (int i = 0; i < blocks.GetLength(0); i++)
+            for (int i = 0; i < blocks.Length; i++)
             {
-                for (int j = 0; j < blocks.GetLength(1); j++)
+                for (int j = 0; j < blocks[0].Length; j++)
                 {
                     PlaceBlock(new Vector2Int(i,j), blocks[i][j]);
                 }
@@ -45,18 +45,18 @@ namespace Core.BlockSystem
         {
             List<UniTask> taskList = new List<UniTask>();
             
-            for (int i = 0; i < blocks.GetLength(0); i++)
+            for (int i = 0; i < blocks.Length; i++)
             {
-                for (int j = 0; j < blocks.GetLength(1); j++)
+                for (int j = 0; j < blocks[0].Length; j++)
                 {
                     var blockPositionOnGrid = new Vector2Int(i,j);
-                    if (GridMapManager.Instance.CheckCellExist(blockPositionOnGrid))
+                    if (GridMapManager.Instance.CheckCellExist(blockPositionOnGrid) && blocks[i][j]!=null)
                     {
                         var blockPosition = blocks[i][j].GetTransform().position;
                         RemoveBlockOnGridMap(blockPosition);
-                        var destinationY = GridMapManager.Instance.GetCellPosition(blockPositionOnGrid).y;
-                        var time = Mathf.Abs(destinationY - blockPosition.y) / FallSpeed;
-                        var tween = blocks[i][j].GetTransform().DOMoveY(destinationY, time).SetEase(Ease.OutBounce);
+                        var destination = GridMapManager.Instance.GetCellPosition(blockPositionOnGrid);
+                        var time = Mathf.Abs(destination.y - blockPosition.y) / FallSpeed;
+                        var tween = blocks[i][j].GetTransform().DOMove(destination, time).SetEase(Ease.OutBounce);
                         taskList.Add(tween.ToUniTask());
                         GridMapManager.Instance.FillCell(blockPositionOnGrid);
                     }

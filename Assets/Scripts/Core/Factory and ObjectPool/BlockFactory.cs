@@ -1,8 +1,8 @@
-﻿using System;
+﻿using BlockSystem;
 using Factory_and_ObjectPool;
 using UnityEngine;
 
-namespace BlockSystem
+namespace Core.Factory_and_ObjectPool
 {
     public class BlockFactory : Factory
     {
@@ -23,7 +23,8 @@ namespace BlockSystem
 
         public override PoolableObject GetProduct()
         {
-            return _pool.GetEntity();
+            var entity = _pool.GetEntity();
+            return entity;
         }
     }
 }

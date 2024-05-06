@@ -8,10 +8,10 @@ namespace Core.BlockSystem
     public class BlockSearchHandler : MonoBehaviour
     {
         private IBlock[][] _blockMap;
-        
+
         public static BlockSearchHandler Instance;
-        
-        private List<(Vector2Int,int)> _foundedBlockIndexesAndOrders;
+
+        private List<(Vector2Int, int)> _foundedBlockIndexesAndOrders;
 
         public List<(Vector2Int, int)> FoundedBlockIndexesAndOrders => _foundedBlockIndexesAndOrders;
 
@@ -30,7 +30,7 @@ namespace Core.BlockSystem
 
         private void SetInstance()
         {
-            if (Instance==null)
+            if (Instance == null)
             {
                 Instance = this;
             }
@@ -50,17 +50,17 @@ namespace Core.BlockSystem
         {
             _blockMap[index.x][index.y] = null;
         }
-        
+
         public void RemoveBlockFromMap(IBlock block)
         {
-            for (int i = 0; i < _blockMap.GetLength(0); i++)
+            for (int i = 0; i < _blockMap.Length; i++)
             {
-                for (int j = 0; j < _blockMap.GetLength(1); j++)
+                for (int j = 0; j < _blockMap[0].Length; j++)
                 {
-                    if (block==_blockMap[i][j])
+                    if (block == _blockMap[i][j])
                     {
                         _blockMap[i][j] = null;
-                    } 
+                    }
                 }
             }
         }
@@ -71,6 +71,8 @@ namespace Core.BlockSystem
 
             switch (block)
             {
+                case null:
+                    break;
                 case ColorBlock:
                 {
                     if (InteractColorBlock(index, block, out var interactableColorBlock)) return interactableColorBlock;
@@ -79,29 +81,30 @@ namespace Core.BlockSystem
                 }
                 case PowerUpBlock:
                     InteractPowerUpBlock(index, block);
-                   return block;
+                    return block;
                     break;
             }
+
             return null;
         }
-        
+
         public void AddNewBlock(Vector2Int centerIndex, IBlock powerUp)
         {
             _blockMap[centerIndex.x][centerIndex.y] = powerUp;
         }
-        
+
         private void InteractPowerUpBlock(Vector2Int index, IBlock block)
         {
-             int startOrder = 0;
-             _foundedBlockIndexesAndOrders.Add((index, startOrder));
-             SearchByPowerUp(index, block, startOrder);
+            int startOrder = 0;
+            _foundedBlockIndexesAndOrders.Add((index, startOrder));
+            SearchByPowerUp(index, block, startOrder);
         }
 
         private void SearchByPowerUp(Vector2Int index, IBlock block, int startOrder)
         {
             RecursiveSearchByPowerUp(index, block, startOrder);
         }
-        
+
         private void RecursiveSearchByPowerUp(Vector2Int index, IBlock block, int startOrder)
         {
             if (block is BombBlock)
@@ -121,15 +124,15 @@ namespace Core.BlockSystem
             int currentOrder = startOrder;
             if (rocketDirectionIsHorizontal)
             {
-                for (int i = 1; i < _blockMap.GetLength(1); i++)
+                for (int i = 1; i < _blockMap[0].Length; i++)
                 {
-                    bool lookRight = (index.y + i >= 0 && index.y + i <= _blockMap.GetLength(1));
-                    bool lookLeft = (index.y - i >= 0 && index.y - i <= _blockMap.GetLength(1));
+                    bool lookRight = (index.y + i >= 0 && index.y + i <= _blockMap[0].Length);
+                    bool lookLeft = (index.y - i >= 0 && index.y - i <= _blockMap[0].Length);
                     if (lookRight || lookLeft)
                     {
                         if (lookLeft)
                         {
-                            
+
                             x = index.x;
                             y = index.y - 1;
                             FoundPowerUpTarget(x, y, currentOrder);
@@ -150,10 +153,10 @@ namespace Core.BlockSystem
             }
             else
             {
-                for (int i = 1; i < _blockMap.GetLength(0); i++)
+                for (int i = 1; i < _blockMap.Length; i++)
                 {
-                    bool lookUp = (index.x - i >= 0 && index.x - i <= _blockMap.GetLength(0));
-                    bool lookDown = (index.x + i >= 0 && index.x + i <= _blockMap.GetLength(0));
+                    bool lookUp = (index.x - i >= 0 && index.x - i <= _blockMap.Length - 1);
+                    bool lookDown = (index.x + i >= 0 && index.x + i <= _blockMap[0].Length - 1);
                     if (lookUp || lookDown)
                     {
                         if (lookDown)
@@ -183,11 +186,11 @@ namespace Core.BlockSystem
         {
             var currentIndex = new Vector2Int(x, y);
             _foundedBlockIndexesAndOrders.Add((currentIndex, currentOrder));
-            RecursiveSearchBlockInSameTypeNeighbor(BlockType.ObstacleBlock,currentIndex);
             var block = _blockMap[currentIndex.x][currentIndex.y];
-            if (block is PowerUpBlock)
+            if (block is PowerUpBlock &&
+                _foundedBlockIndexesAndOrders.All(tuple => tuple.Item1 != new Vector2Int(x, y)))
             {
-                RecursiveSearchByPowerUp(currentIndex, block, currentOrder+1);
+                RecursiveSearchByPowerUp(currentIndex, block, currentOrder + 1);
             }
         }
 
@@ -199,15 +202,16 @@ namespace Core.BlockSystem
             {
                 for (int j = -1; j <= 1; j++)
                 {
-                    if (i==0 && j==0)
+                    if (i == 0 && j == 0)
                     {
                         continue;
                     }
-                    inRowBorders = (index.x + i >= 0 && index.x + i <= _blockMap.GetLength(0));
-                    inColumnBorders = (index.y + j >= 0 && index.y + j <= _blockMap.GetLength(1));
+
+                    inRowBorders = (index.x + i >= 0 && index.x + i <= _blockMap.Length - 1);
+                    inColumnBorders = (index.y + j >= 0 && index.y + j <= _blockMap[0].Length - 1);
                     if (inRowBorders && inColumnBorders)
                     {
-                        FoundPowerUpTarget(index.x+i,index.y+j, startOrder);
+                        FoundPowerUpTarget(index.x + i, index.y + j, startOrder);
                     }
                 }
             }
@@ -217,14 +221,18 @@ namespace Core.BlockSystem
         {
             interactableBlock = null;
             var blockType = block.GetBlockType();
+
             SearchBlockInSameTypeNeighbor(blockType, index);
             if (_foundedBlockIndexesAndOrders.Any((tuple => GetBlock(tuple.Item1).GetBlockType() == blockType)))
             {
+                if (!_foundedBlockIndexesAndOrders.Contains((index, 0)))
                 {
-                    _foundedBlockIndexesAndOrders.Add((index,0));
-                    interactableBlock = block;
-                    return true;
+                    _foundedBlockIndexesAndOrders.Add((index, 0));
+
                 }
+
+                interactableBlock = block;
+                return true;
             }
 
             return false;
@@ -237,41 +245,130 @@ namespace Core.BlockSystem
 
         private void RecursiveSearchBlockInSameTypeNeighbor(BlockType blockType, Vector2Int searchIndex)
         {
-            Vector2Int index;
-            IBlock curBlock;
-            for (int xOffset = -1; xOffset <= 1; xOffset++)
+            int x = searchIndex.x;
+            int y = searchIndex.y + 1;
+            LookNeighbor(blockType, x, y);
+            
+            y = searchIndex.y - 1;
+            LookNeighbor(blockType, x, y);
+            
+            x = searchIndex.x + 1;
+            y = searchIndex.y;
+            LookNeighbor(blockType, x, y);
+            
+            x = searchIndex.x - 1;
+            LookNeighbor(blockType, x, y);
+        }
+
+        private void LookNeighbor(BlockType blockType, int x, int y)
+        {
+            if (!(x < 0 || x >= _blockMap.Length || y < 0 || y >= _blockMap[0].Length))
             {
-                for (int yOffset = -1; yOffset <= 1; yOffset++)
+                IBlock curBlock;
+                Vector2Int index = new Vector2Int(x, y);
+                curBlock = _blockMap[index.x][index.y];
+                Debug.Log(curBlock + index.ToString());
+                if (curBlock != null)
                 {
-                    if (xOffset == 0 && yOffset == 0) continue;
-
-                    int x = searchIndex.x + xOffset;
-                    int y = searchIndex.y + yOffset;
-
-                    if (x < 0 || x >= _blockMap.GetLength(0) || y < 0 || y >= _blockMap.GetLength(1))
-                    {
-                        continue;
-                    }
-
-                    index = new Vector2Int(x, y);
-                    curBlock = _blockMap[index.x][index.y];
-                    if (curBlock == null)
-                    {
-                        continue;
-                    }
-
                     var hasIndex = _foundedBlockIndexesAndOrders.Any(tuple => tuple.Item1 == index);
                     if (curBlock.GetBlockType() == blockType && !hasIndex)
                     {
+                        
                         _foundedBlockIndexesAndOrders.Add((index, 0));
                         RecursiveSearchBlockInSameTypeNeighbor(blockType, index);
                     }
-                    else if (curBlock is ObstacleBlock)
+                }
+            }
+        }
+
+        public ObstacleBlock[] GetObstacleBlockNeighbor(Vector2Int searchIndex)
+        {
+            List<ObstacleBlock> obstacleBlocks=new List<ObstacleBlock>();
+            int x = searchIndex.x;
+            int y = searchIndex.y + 1;
+            var obstacle=GetBlock(new Vector2Int(x, y));
+            if (obstacle!=null && obstacle is ObstacleBlock)
+            {
+                obstacleBlocks.Add(obstacle as ObstacleBlock);
+            }
+            
+            y = searchIndex.y - 1;
+            obstacle=GetBlock(new Vector2Int(x, y));
+            if (obstacle!=null && obstacle is ObstacleBlock)
+            {
+                obstacleBlocks.Add(obstacle as ObstacleBlock);
+            }
+            
+            x = searchIndex.x + 1;
+            y = searchIndex.y;
+            obstacle=GetBlock(new Vector2Int(x, y));
+            if (obstacle!=null && obstacle is ObstacleBlock)
+            {
+                obstacleBlocks.Add(obstacle as ObstacleBlock);
+            }
+            
+            x = searchIndex.x - 1;
+            obstacle=GetBlock(new Vector2Int(x, y));
+            if (obstacle!=null && obstacle is ObstacleBlock)
+            {
+                obstacleBlocks.Add(obstacle as ObstacleBlock);
+            }
+
+            return obstacleBlocks.ToArray();
+        }
+
+        public bool IsShuffleNecessary()
+        {
+            return SearchBlastIsPossible();
+        }
+
+        private bool SearchBlastIsPossible()
+        {
+            for (int i = 0; i < _blockMap.Length; i++)
+            {
+                for (int j = 0; j < _blockMap[0].Length; j++)
+                {
+                    if (_blockMap[i][j] is PowerUpBlock)
                     {
-                        _foundedBlockIndexesAndOrders.Add((index, 0));
+                        return false;
+                    }
+                    else if (_blockMap[i][j] is ColorBlock)
+                    {
+                        if (InteractColorBlock(new Vector2Int(i, j), _blockMap[i][j], out var _))
+                        {
+                            return false;
+                        }
+
+                        ResetSearchLists();
                     }
                 }
             }
+
+            return true;
+        }
+
+        public IBlock[][] Shuffle()
+        {
+            List<IBlock> list = new List<IBlock>();
+
+            foreach (var blockMapRow in _blockMap)
+            {
+                foreach (var block in blockMapRow)
+                {
+                    list.Add(block);
+                }
+            }
+
+            for (int i = 0; i < _blockMap.Length; i++)
+            {
+                for (int j = 0; j < _blockMap[0].Length; j++)
+                {
+                    _blockMap[i][j] = list[Random.Range(0, list.Count - 1)];
+                    list.Remove(_blockMap[i][j]);
+                }
+            }
+
+            return _blockMap;
         }
     }
 }

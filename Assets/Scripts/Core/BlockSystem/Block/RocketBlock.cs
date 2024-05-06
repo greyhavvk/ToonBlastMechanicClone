@@ -4,8 +4,8 @@ namespace Core.BlockSystem.Block
 {
     public class RocketBlock : PowerUpBlock
     {
-        [SerializeField] private SpriteRenderer spriteRenderer;
-        [SerializeField] private Sprite[] rocketSprites;
+        [SerializeField] private GameObject horizontalHeadParent;
+        [SerializeField] private GameObject verticalHeadParent;
         [SerializeField] private RocketHead[] horizontalRocketHeads;
         [SerializeField] private RocketHead[] verticalRocketHeads;
 
@@ -30,7 +30,8 @@ namespace Core.BlockSystem.Block
         {
             int directionIndex = Random.Range(0, 1);
             _rocketDirectionIsHorizontal =(directionIndex  == 0);
-            spriteRenderer.sprite = rocketSprites[directionIndex];
+            horizontalHeadParent.SetActive(_rocketDirectionIsHorizontal);
+            verticalHeadParent.SetActive(!_rocketDirectionIsHorizontal);
         }
         
         protected override void PlayBlastParticle()

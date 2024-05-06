@@ -1,8 +1,9 @@
 using System.Collections.Generic;
 using DG.Tweening;
+using Factory_and_ObjectPool;
 using UnityEngine;
 
-namespace Factory_and_ObjectPool
+namespace Core.Factory_and_ObjectPool
 {
     public class ObjectPool
     {
@@ -42,9 +43,8 @@ namespace Factory_and_ObjectPool
 
         private bool CheckIfPrefabNullOrEmpty()
         {
-            if (_prefab == null)
+            if (!_prefab)
             {
-                Debug.LogError("Prefab array is null");
                 return true;
             }
 
@@ -65,7 +65,7 @@ namespace Factory_and_ObjectPool
                 entity = _objectPool.Dequeue();
             }
 
-            if (entity != null)
+            if (entity)
             {
                 entity.gameObject.SetActive(true);
             }
@@ -79,9 +79,9 @@ namespace Factory_and_ObjectPool
 
         public void ReturnEntity(PoolableObject entity)
         {
-            if (entity == null) return;
-
-            entity.gameObject.SetActive(false);
+            if (!entity) return;
+            if (_objectPool.Contains(entity)) return; 
+                entity.gameObject.SetActive(false);
             entity.transform.SetParent(_poolParent);
 
             var itemTransform = entity.gameObject.transform;

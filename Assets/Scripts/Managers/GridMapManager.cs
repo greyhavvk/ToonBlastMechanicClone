@@ -51,8 +51,8 @@ namespace Managers
 
         public bool CheckCellExist(Vector2Int cellIndex)
         {
-            return (cellIndex.x >= 0 && cellIndex.x < _cellDatas.GetLength(0)) &&
-                   (cellIndex.y >= 0 && cellIndex.y < _cellDatas.GetLength(1));
+            return (cellIndex.x >= 0 && cellIndex.x < _cellDatas.Length) &&
+                   (cellIndex.y >= 0 && cellIndex.y < _cellDatas[0].Length);
         }
 
         public Vector2 GetCellPosition(Vector2Int cellIndex)
@@ -84,13 +84,13 @@ namespace Managers
         public (Vector2, Vector2) GetPositionsOfSideOfRow(int rowIndex)
         {
             return (GetCellPosition(new Vector2Int(rowIndex, 0)),
-                GetCellPosition(new Vector2Int(rowIndex, _cellDatas.GetLength(1))));
+                GetCellPosition(new Vector2Int(rowIndex, _cellDatas[0].Length-1)));
         }
 
         public (Vector2, Vector2) GetPositionsOfSideOfColumn(int columnIndex)
         {
             return (GetCellPosition(new Vector2Int(0, columnIndex)),
-                GetCellPosition(new Vector2Int(_cellDatas.GetLength(0), columnIndex)));
+                GetCellPosition(new Vector2Int(_cellDatas.Length-1, columnIndex)));
         }
     }
 }

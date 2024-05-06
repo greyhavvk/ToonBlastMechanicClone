@@ -1,9 +1,8 @@
-﻿using Core.ParticleSystems;
-using DG.Tweening;
-using SerializableSetting;
+﻿using Core.SerializableSetting;
+using ParticleSystems;
 using UnityEngine;
 
-namespace ParticleSystems
+namespace Core.ParticleSystems
 {
     public class ParticleManager : MonoBehaviour
     {
@@ -13,6 +12,10 @@ namespace ParticleSystems
         private void Awake()
         {
             SetInstance();
+            foreach (var particleFactory in particleFactories)
+            {
+                particleFactory.Value.Initialize();
+            }
         }
     
         private void SetInstance()
@@ -23,7 +26,7 @@ namespace ParticleSystems
         public void PlayParticle(ParticleType particleType, Vector2 position)
         {
             if (!particleFactories.ContainsKey(particleType)) return;
-            var particle = particleFactories[particleType].GetProduct() as ParticleEntity;
+            var particle = particleFactories.GetValue(particleType).GetProduct() as ParticleEntity;
             particle.transform.position = position;
             particle.Play();
 

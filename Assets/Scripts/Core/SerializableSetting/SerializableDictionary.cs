@@ -1,37 +1,95 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using UnityEngine;
+using Random = UnityEngine.Random;
 
-namespace SerializableSetting
+namespace Core.SerializableSetting
 {
-    [System.Serializable]
-    public class SerializableDictionary<TKey, TValue> : Dictionary<TKey, TValue>, ISerializationCallbackReceiver
+    [Serializable]
+    public class SerializableDictionary<TKey, TValue> where TKey: IComparable
     {
-        [SerializeField]
-        private List<TKey> keys;
+        [SerializeField] private List<Pair<TKey, TValue>> elements = new List<Pair<TKey, TValue>>();
 
-        [SerializeField]
-        private List<TValue> values;
-        
-        public void OnBeforeSerialize()
+        public int Count => elements.Count;
+
+        public IEnumerator<Pair<TKey, TValue>> GetEnumerator()
         {
-            keys.Clear();
-            values.Clear();
-            foreach (KeyValuePair<TKey, TValue> pair in this)
+            return elements.GetEnumerator();
+        }
+
+        public TValue GetValue(TKey key)
+        {
+            foreach (var pair in elements)
             {
-                keys.Add(pair.Key);
-                values.Add(pair.Value);
+                if (pair.Key.Equals(key))
+                {
+                    return pair.Value;
+                }
             }
+
+            return default;
         }
 
-        public void OnAfterDeserialize()
+        public bool TryGetValue(TKey key, out TValue value)
         {
-            Clear();
+            foreach (var pair in elements)
+            {
+                if (pair.Key.Equals(key))
+                {
+                    value = pair.Value;
+                    return true;
+                }
+            }
 
-            if (keys.Count != values.Count)
-                throw new System.Exception($"Error deserializing SerializableDictionary: keys count ({keys.Count}) does not match values count ({values.Count}).");
-
-            for (int i = 0; i < keys.Count; i++)
-                Add(keys[i], values[i]);
+            value = default;
+            return false;
         }
+
+        public bool ContainsKey(TKey key)
+        {
+            foreach (var pair in elements)
+            {
+                if (pair.Key.Equals(key)) return true;
+            }
+
+            return false;
+        }
+
+        public bool ContainsValue(TValue value)
+        {
+            foreach (var pair in elements)
+            {
+                if (pair.Value.Equals(value)) return true;
+            }
+
+            return false;
+        }
+
+        public TValue GetValueRandomly()
+        {
+            return elements[Random.Range(0, elements.Count)].Value;
+        }
+
+#if UNITY_EDITOR
+        private bool ValidateDuplicatedKeys(List<Pair<TKey, TValue>> elements)
+        {
+            for (var i = 1; i < elements.Count; i++)
+            {
+                if (elements[i].Key.Equals(elements[i - 1].Key)) return false;
+            }
+
+            return true;
+        }
+
+        private void OnElementsChanged()
+        {
+            SortAscending();
+        }
+
+        private void SortAscending()
+        {
+            elements.Sort((x, y) => x.Key.CompareTo(y.Key));
+        }
+#endif
     }
 }

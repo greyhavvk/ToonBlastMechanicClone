@@ -10,7 +10,5 @@
         YellowBlock,
         ObstacleBlock,
         BombBlock,
-        RocketBlockHorizontal,
-        RocketBlockVertical,
     }
 }
