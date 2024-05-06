@@ -123,32 +123,33 @@ namespace Core.BlockSystem
         }
 
         
-        //TODO roketin sıkıntısı bence burada
         private void SearchRocketTargets(Vector2Int index, bool rocketDirectionIsHorizontal, int startOrder)
         {
             int x, y;
+            Vector2Int newIndex;
             int currentOrder = startOrder;
             if (rocketDirectionIsHorizontal)
             {
                 for (int i = 1; i < _blockMap[0].Length; i++)
                 {
-                    bool lookRight = (index.y + i >= 0 && index.y + i <= _blockMap[0].Length);
-                    bool lookLeft = (index.y - i >= 0 && index.y - i <= _blockMap[0].Length);
+                    bool lookRight = (index.y + i >= 0 && index.y + i < _blockMap[0].Length);
+                    bool lookLeft = (index.y - i >= 0 && index.y - i < _blockMap[0].Length);
                     if (lookRight || lookLeft)
                     {
                         if (lookLeft)
                         {
-
                             x = index.x;
-                            y = index.y - 1;
-                            FoundPowerUpTarget(x, y, currentOrder);
+                            y = index.y - i;
+                            newIndex = new Vector2Int(x, y);
+                            FoundPowerUpTarget(newIndex, currentOrder);
                         }
 
                         if (lookRight)
                         {
                             x = index.x;
-                            y = index.y + 1;
-                            FoundPowerUpTarget(x, y, currentOrder);
+                            y = index.y + i;
+                            newIndex = new Vector2Int(x, y);
+                            FoundPowerUpTarget(newIndex, currentOrder);
                         }
 
                         currentOrder++;
@@ -163,22 +164,25 @@ namespace Core.BlockSystem
             {
                 for (int i = 1; i < _blockMap.Length; i++)
                 {
-                    bool lookUp = (index.x - i >= 0 && index.x - i <= _blockMap.Length - 1);
-                    bool lookDown = (index.x + i >= 0 && index.x + i <= _blockMap[0].Length - 1);
+                    bool lookUp = (index.x - i >= 0 && index.x - i < _blockMap.Length);
+                    bool lookDown = (index.x + i >= 0 && index.x + i < _blockMap.Length);
+
                     if (lookUp || lookDown)
                     {
                         if (lookDown)
                         {
-                            x = index.x - 1;
+                            x = index.x + i;
                             y = index.y;
-                            FoundPowerUpTarget(x, y, currentOrder);
+                            newIndex = new Vector2Int(x, y);
+                            FoundPowerUpTarget(newIndex, currentOrder);
                         }
 
                         if (lookUp)
                         {
-                            x = index.x + 1;
+                            x = index.x - i;
                             y = index.y;
-                            FoundPowerUpTarget(x, y, currentOrder);
+                            newIndex = new Vector2Int(x, y);
+                            FoundPowerUpTarget(newIndex, currentOrder);
                         }
 
                         currentOrder++;
@@ -192,15 +196,13 @@ namespace Core.BlockSystem
 
         }
 
-        private void FoundPowerUpTarget(int x, int y, int currentOrder)
+        private void FoundPowerUpTarget(Vector2Int index, int currentOrder)
         {
-            var currentIndex = new Vector2Int(x, y);
-            _foundedBlockIndexesAndOrders.Add((currentIndex, currentOrder));
-            var block = _blockMap[currentIndex.x][currentIndex.y];
-            if (block is PowerUpBlock &&
-                _foundedBlockIndexesAndOrders.All(tuple => tuple.Item1 != new Vector2Int(x, y)))
+            _foundedBlockIndexesAndOrders.Add((index, currentOrder));
+            var block = _blockMap[index.x][index.y];
+            if (block is PowerUpBlock)
             {
-                RecursiveSearchByPowerUp(currentIndex, block, currentOrder + 1);
+                RecursiveSearchByPowerUp(index, block, currentOrder + 1);
             }
         }
 
@@ -221,7 +223,7 @@ namespace Core.BlockSystem
                     inColumnBorders = (index.y + j >= 0 && index.y + j <= _blockMap[0].Length - 1);
                     if (inRowBorders && inColumnBorders)
                     {
-                        FoundPowerUpTarget(index.x + i, index.y + j, startOrder);
+                        FoundPowerUpTarget(new Vector2Int(index.x + i, index.y + j), startOrder);
                     }
                 }
             }

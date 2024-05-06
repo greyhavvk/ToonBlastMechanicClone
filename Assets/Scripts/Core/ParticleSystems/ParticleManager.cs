@@ -1,6 +1,5 @@
 ﻿using Core.Factory_and_ObjectPool;
 using Core.SerializableSetting;
-using ParticleSystems;
 using UnityEngine;
 
 namespace Core.ParticleSystems

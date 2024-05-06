@@ -17,7 +17,8 @@ namespace Managers
         public Action OnBlocksSettled;
         public Action OnBlocksMoving;
 
-        private const int TimePerOrder = 100;
+        private const int TimePerOrderInMs = 100;
+        private const float TimePerOrderInSecond= .1f;
 
         public void Initialize(BlockType[][] getGridMapBlockSettlement)
         {
@@ -119,6 +120,7 @@ namespace Managers
             foreach (var blastOrder in blastInOrderList)
             {
                 var block = BlockSearchHandler.Instance.GetBlock(blastOrder.Item1);
+                var delay = (blastOrder.Item2) * TimePerOrderInMs;
                 switch (block)
                 {
                     case null:
@@ -128,19 +130,22 @@ namespace Managers
                         var targets = rocketBlock.RocketDirectionIsHorizontal
                             ? BlockPlacementHandler.Instance.GetPositionsOfSideOfRow(blastOrder.Item1.x)
                             : BlockPlacementHandler.Instance.GetPositionsOfSideOfColumn(blastOrder.Item1.y);
-                        var speed = BlockPlacementHandler.Instance.GetDistanceBetweenBlocks() / TimePerOrder;
+                        var speed = BlockPlacementHandler.Instance.GetDistanceBetweenBlocks()*((blastOrder.Item2)+1) / TimePerOrderInSecond;
                         rocketBlock.SetRocketHeads(targets, speed);
-                        break;
+                        block.DelayedBlastBlock((blastOrder.Item2) * TimePerOrderInMs);
+                        lastOrderNumber = Mathf.Max(lastOrderNumber, blastOrder.Item2);
+                        continue;
                     }
+                    default:
+                        block.DelayedBlastBlock((blastOrder.Item2) * TimePerOrderInMs);
+                        ReduceObstacleHitPoint(blastOrder.Item1,delay);
+                        lastOrderNumber = Mathf.Max(lastOrderNumber, blastOrder.Item2);
+                        continue;
+                        
                 }
-
-                var delay = (blastOrder.Item2) * TimePerOrder;
-                block.DelayedBlastBlock((blastOrder.Item2) * TimePerOrder);
-                ReduceObstacleHitPoint(blastOrder.Item1,delay);
-                lastOrderNumber = Mathf.Max(lastOrderNumber, blastOrder.Item2);
             }
 
-            await UniTask.Delay(lastOrderNumber * TimePerOrder);
+            await UniTask.Delay(lastOrderNumber * TimePerOrderInMs);
             await UniTask.DelayFrame(1);
 
             foreach (var blockBlasted in blastInOrderList)
