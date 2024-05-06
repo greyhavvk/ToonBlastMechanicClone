@@ -51,11 +51,6 @@ namespace Managers
             return _currentLevel.goals;
         }
 
-        public int GetLevelIndex()
-        {
-            return NextLevelIndex;
-        }
-
         public void IncreaseLevelIndex()
         {
             SaveNewLevelIndex();

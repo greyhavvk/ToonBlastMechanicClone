@@ -71,7 +71,7 @@ namespace Managers
 
         private void ReLoadGameScene()
         {
-            SceneManager.LoadScene(levelManager.GetLevelIndex());
+            SceneManager.LoadScene(0);
         }
 
         private void GameFail()
