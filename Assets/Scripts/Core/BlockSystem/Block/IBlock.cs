@@ -1,4 +1,5 @@
 ﻿using Cysharp.Threading.Tasks;
+using Enums;
 using UnityEngine;
 
 namespace Core.BlockSystem.Block

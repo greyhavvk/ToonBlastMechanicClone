@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Core.BlockSystem.Block;
 using Core.Factory_and_ObjectPool;
 using Core.SerializableSetting;
+using Enums;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
@@ -17,14 +18,19 @@ namespace Core.BlockSystem
         private void Awake()
         {
             SetInstance();
-            InitializeFactories();
         }
 
-        private void InitializeFactories()
+        public void Initialize(Action<ParticleType, Vector2> onPlayParticle)
         {
+            InitializeFactories(onPlayParticle);
+        }
+
+        private void InitializeFactories(Action<ParticleType, Vector2> onPlayParticle)
+        {
+            var data = new BlockInitializeData(onPlayParticle);
             foreach (var blockFactory in blockFactories)
             {
-                blockFactory.Value.Initialize();
+                blockFactory.Value.Initialize(data);
             }
         }
 
@@ -129,14 +135,14 @@ namespace Core.BlockSystem
 
         private List<(int, IBlock[])> GenerateBlocksForNeededColumns(IBlock[][] blockMap)
         {
-            List<(int, IBlock[])> columnIndexAndFillingBlocks = new List<(int, IBlock[])>();
+            var columnIndexAndFillingBlocks = new List<(int, IBlock[])>();
 
             for (int j = 0; j < blockMap[0].Length; j++)
             {
                 List<IBlock> spawnedBlocks = new List<IBlock>();
-                for (int i = 0; i < blockMap.Length; i++)
+                foreach (var row in blockMap)
                 {
-                    var block = blockMap[i][j];
+                    var block = row[j];
                     if (block!=null)
                     {
                         break;
@@ -146,7 +152,7 @@ namespace Core.BlockSystem
                         var newBlock = blockFactories.GetValue(GetRandomBulletType()).GetProduct() as IBlock;
                         newBlock?.Placed();
                         spawnedBlocks.Add(newBlock);
-                        blockMap[i][j] = newBlock;
+                        row[j] = newBlock;
                     }
                 }
                 columnIndexAndFillingBlocks.Add((j,spawnedBlocks.ToArray()));

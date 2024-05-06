@@ -780,6 +780,7 @@ MonoBehaviour:
   uiManager: {fileID: 5199922187482010930}
   gridMapManager: {fileID: 472703087440941271}
   blockManager: {fileID: 8522263428411122188}
+  particleManager: {fileID: 5161463914993649261}
   goalTracker: {fileID: 2399657395586087029}
   moveCountTracker: {fileID: 2489834259563796985}
   timeTracker: {fileID: 7570076014775512614}

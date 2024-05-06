@@ -5,6 +5,7 @@ using Core.BlockSystem;
 using Core.BlockSystem.Block;
 using Core.TrackerSystem;
 using Cysharp.Threading.Tasks;
+using Enums;
 using UnityEngine;
 
 namespace Managers
@@ -16,7 +17,7 @@ namespace Managers
 
         public Action OnBlocksSettled;
         public Action OnBlocksMoving;
-
+        public Action<ParticleType, Vector2> OnPlayParticle;
         private const int TimePerOrderInMs = 100;
         private const float TimePerOrderInSecond= .1f;
 
@@ -25,6 +26,7 @@ namespace Managers
             BlockPlacementHandler.Instance.OnFallEnded += FallEnded;
             BlockPlacementHandler.Instance.OnMoveToCenterAnimationEnded += MoveToCenterAnimationComplete;
 
+            BlockFillingHandler.Instance.Initialize(OnPlayParticle);
             var generatedBlocks = BlockFillingHandler.Instance.SpawnRequestedBlocksByLevel(getGridMapBlockSettlement);
             BlockPlacementHandler.Instance.PlaceInitialBlocks(generatedBlocks);
             BlockSearchHandler.Instance.SetBlockMap(generatedBlocks);

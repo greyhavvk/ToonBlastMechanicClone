@@ -1,26 +1,21 @@
 ﻿using Core.Factory_and_ObjectPool;
+using Core.ParticleSystems;
 using Core.SerializableSetting;
+using Enums;
 using UnityEngine;
 
-namespace Core.ParticleSystems
+namespace Managers
 {
     public class ParticleManager : MonoBehaviour
     {
         [SerializeField] private SerializableDictionary<ParticleType, ParticleFactory> particleFactories;
-        public static ParticleManager Instance { get; private set; }
 
-        private void Awake()
+        public void Initialize()
         {
-            SetInstance();
             foreach (var particleFactory in particleFactories)
             {
-                particleFactory.Value.Initialize();
+                particleFactory.Value.Initialize(new ParticleInitializeData());
             }
-        }
-    
-        private void SetInstance()
-        {
-            Instance = this;
         }
 
         public void PlayParticle(ParticleType particleType, Vector2 position)

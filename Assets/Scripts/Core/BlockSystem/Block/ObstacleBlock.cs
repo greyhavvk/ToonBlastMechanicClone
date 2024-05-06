@@ -1,4 +1,6 @@
 ﻿using Core.ParticleSystems;
+using Enums;
+using Managers;
 using UnityEngine;
 
 namespace Core.BlockSystem.Block
@@ -16,7 +18,7 @@ namespace Core.BlockSystem.Block
 
         protected override void PlayBlastParticle()
         {
-            ParticleManager.Instance.PlayParticle(ParticleType.ObstacleBlock, transform.position);
+            OnPlayParticle?.Invoke(ParticleType.ObstacleBlock, transform.position);
         }
     }
 }

@@ -1,6 +1,4 @@
-﻿using System;
-using Core.ParticleSystems;
-using Core.TrackerSystem;
+﻿using Core.TrackerSystem;
 
 namespace Core.BlockSystem.Block
 {
@@ -10,13 +8,6 @@ namespace Core.BlockSystem.Block
         {
             base.BlastBlock();
             GoalTracker.Instance.BlockDestroyed(GetBlockType());
-        }
-
-        protected override void PlayBlastParticle()
-        {
-            ParticleManager.Instance.PlayParticle(
-                (ParticleType)Enum.Parse(typeof(ParticleType), GetBlockType().ToString()),
-                transform.position);
         }
     }
 }

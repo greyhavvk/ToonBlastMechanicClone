@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using Core.BlockSystem.Block;
 using Core.SerializableSetting;
+using Enums;
 using Managers;
 using UnityEngine;
 
@@ -11,7 +11,7 @@ namespace Core.TrackerSystem
     {
         public static GoalTracker Instance;
         private Dictionary<BlockType, int> _goals;
-        private int _completedGoals = 0;
+        private int _completedGoals;
 
         public Action OnGoalComplete;
 

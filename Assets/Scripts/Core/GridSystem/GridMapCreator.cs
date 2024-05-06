@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace GridSystem
+namespace Core.GridSystem
 {
     public class GridMapCreator : MonoBehaviour
     {

@@ -1,4 +1,4 @@
-using GridSystem;
+using Core.GridSystem;
 using UnityEngine;
 
 namespace Managers
@@ -25,7 +25,7 @@ namespace Managers
             _cellSizeY = cellSize.y;
         }
 
-        public void CreateGridMap(Vector2Int gridMapSize, Vector2 cellSize)
+        private void CreateGridMap(Vector2Int gridMapSize, Vector2 cellSize)
         {
             _cellDatas = gridMapCreator.CreateGridMap(gridMapSize,cellSize);
         }

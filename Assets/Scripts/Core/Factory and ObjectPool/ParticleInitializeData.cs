@@ -1,6 +1,4 @@
-﻿using Factory_and_ObjectPool;
-
-namespace ParticleSystems
+﻿namespace Core.Factory_and_ObjectPool
 {
     public class ParticleInitializeData : PoolableObjectInitializeData
     {

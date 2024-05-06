@@ -1,4 +1,4 @@
-﻿namespace Core.BlockSystem
+﻿namespace Enums
 {
     public enum ColorType
     {

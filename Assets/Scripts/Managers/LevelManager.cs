@@ -1,7 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using Core.BlockSystem.Block;
-using Core.SerializableSetting;
+﻿using Core.SerializableSetting;
+using Enums;
 using ScriptableObject;
 using UnityEngine;
 
@@ -11,7 +9,7 @@ namespace Managers
     {
         [SerializeField] private LevelSo[] levels;
 
-        private int _currentLevelIndex = 0;
+        private int _currentLevelIndex;
         private LevelSo _currentLevel;
         private int NextLevelIndex => _currentLevelIndex + 1;
 

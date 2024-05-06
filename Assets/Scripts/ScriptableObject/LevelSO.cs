@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
-using Core.BlockSystem.Block;
 using Core.SerializableSetting;
+using Enums;
 using UnityEngine;
 
 namespace ScriptableObject

@@ -1,11 +1,7 @@
-﻿using System;
-
-namespace Core.BlockSystem.Block
+﻿namespace Enums
 {
-    [Serializable]
-    public enum BlockType
+    public enum ParticleType
     {
-        RandomColor,
         BlueBlock,
         GreenBlock,
         OrangeBlock,
@@ -14,6 +10,5 @@ namespace Core.BlockSystem.Block
         YellowBlock,
         ObstacleBlock,
         BombBlock,
-        RocketBlock,
     }
 }

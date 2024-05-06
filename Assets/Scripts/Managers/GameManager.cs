@@ -1,4 +1,5 @@
 ﻿using Core.TrackerSystem;
+using Enums;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -11,6 +12,7 @@ namespace Managers
         [SerializeField] private UIManager uiManager;
         [SerializeField] private GridMapManager gridMapManager;
         [SerializeField] private BlockManager blockManager;
+        [SerializeField] private ParticleManager particleManager;
 
         [SerializeField] private GoalTracker goalTracker;
         [SerializeField] private MoveCountTracker moveCountTracker;
@@ -29,10 +31,12 @@ namespace Managers
         private void Initialize()
         {
             levelManager.Initialize();
+            particleManager.Initialize();
             
             var cellSize = levelManager.GetGridCellSize();
             var gridMapSize = new Vector2Int(levelManager.GetGridMapBlockSettlement().Length,
                 levelManager.GetGridMapBlockSettlement()[0].Length);
+            
             inputManager.EnableInputs();
             gridMapManager.Initialize(gridMapSize, cellSize);
             blockManager.Initialize(levelManager.GetGridMapBlockSettlement());
@@ -51,6 +55,7 @@ namespace Managers
             goalTracker.OnGoalComplete += GameSuccess;
             moveCountTracker.OnNoMoveLeft += GameFail;
             timeTracker.OnTimeOver += GameFail;
+            blockManager.OnPlayParticle += particleManager.PlayParticle;
         }
 
         private void Unsubscribe()

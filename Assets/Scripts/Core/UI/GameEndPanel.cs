@@ -7,11 +7,11 @@ namespace Core.UI
     {
         [SerializeField] private GameObject panel;
 
-        private Action OnButtonClicked;
+        private Action _onButtonClicked;
 
         public void SetOnButtonClicked(Action onButtonClicked)
         {
-            OnButtonClicked += onButtonClicked;
+            _onButtonClicked += onButtonClicked;
         }
         
         public void OpenPanel()
@@ -21,12 +21,7 @@ namespace Core.UI
 
         public void ButtonClicked()
         {
-            OnButtonClicked?.Invoke();
-        }
-
-        public void ClosePanel()
-        {
-            panel.SetActive(false);
+            _onButtonClicked?.Invoke();
         }
     }
 }
