@@ -48,8 +48,8 @@ namespace Core.GridSystem
         public Vector2Int GetCellIndex(Vector2 worldPosition)
         {
             var localPosition= worldPosition - _gridMapStartPoint;
-            var x = -1*Mathf.FloorToInt((localPosition.y / _cellSize.x)+_cellSize.x);
-            var y = Mathf.FloorToInt((localPosition.x / _cellSize.y)+_cellSize.y);
+            var x = -1*Mathf.FloorToInt((localPosition.y / _cellSize.x)+.5f);
+            var y = Mathf.FloorToInt((localPosition.x / _cellSize.y)+.5f);
             return new Vector2Int(x, y);
         }
     }
